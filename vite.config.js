@@ -1,29 +1,52 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import federation from '@originjs/vite-plugin-federation'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import federation from "@originjs/vite-plugin-federation";
 
 export default defineConfig({
   plugins: [
     react(),
     federation({
-      name: 'healthMF',
-      filename: 'remoteEntry.js',
+      name: "healthMF",
+      filename: "remoteEntry.js",
       exposes: {
-        './HealthRecords': './src/features/health-records/components/HealthRecords.jsx',
-        './VaccinationSchedule': './src/features/vaccination/components/VaccinationSchedule.jsx',
-        './TreatmentHistory': './src/features/treatment/components/TreatmentHistory.jsx',
-        './HealthStore': './src/shared/store/healthStore.js'
+        "./HealthDashboard":
+          "./src/features/dashboard/components/HealthDashboard.jsx",
+        "./HealthRecordsView":
+          "./src/features/health-records/components/HealthRecordsView.jsx",
+        "./VaccinationCalendar":
+          "./src/features/vaccination/components/VaccinationCalendar.jsx",
+        "./HealthRecords":
+          "./src/features/health-records/components/HealthRecords.jsx",
+        "./DiagnosticHistory":
+          "./src/features/health-records/components/DiagnosticHistory.jsx",
+        "./HealthStore": "./src/shared/store/healthStore.js",
       },
-      shared: ['react', 'react-dom', 'react-router-dom', 'zustand', 'axios']
-    })
+      shared: {
+        react: {
+          singleton: true,
+          requiredVersion: "^19.0.0",
+        },
+        "react-dom": {
+          singleton: true,
+          requiredVersion: "^19.0.0",
+        },
+        "react-router-dom": {
+          singleton: true,
+        },
+        zustand: { singleton: true },
+        "framer-motion": { singleton: true },
+        "lucide-react": { singleton: true },
+        axios: {},
+      },
+    }),
   ],
   build: {
-    target: 'esnext',
+    target: "esnext",
     minify: false,
-    cssCodeSplit: false
+    cssCodeSplit: false,
   },
   server: {
     port: 5004,
-    cors: true
-  }
-})
+    cors: true,
+  },
+});
