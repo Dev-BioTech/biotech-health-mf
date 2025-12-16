@@ -1,8 +1,15 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import federation from "@originjs/vite-plugin-federation";
+import path from "path";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "@shared": path.resolve(__dirname, "./src/shared"),
+    },
+  },
   plugins: [
     react(),
     federation({

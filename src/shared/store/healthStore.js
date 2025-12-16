@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { healthService } from "../../features/health-records/services/healthRecordsService";
+import { healthService } from "@shared/services/healthService";
 
 export const useHealthStore = create((set, get) => ({
   records: [],
