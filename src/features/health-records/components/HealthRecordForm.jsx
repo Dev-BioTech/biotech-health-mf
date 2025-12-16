@@ -2,8 +2,23 @@ import { useState, useEffect } from "react";
 import { Save, AlertCircle } from "lucide-react";
 
 export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
+  // Try to get farmId from localStorage (auth-storage), similar to other components
+  const getFarmId = () => {
+    const authStorage = localStorage.getItem("auth-storage");
+    if (authStorage) {
+      try {
+        const parsed = JSON.parse(authStorage);
+        return parsed?.state?.selectedFarm?.id;
+      } catch (e) {
+        console.error("Error parsing auth storage", e);
+      }
+    }
+    return "";
+  };
+
   const [formData, setFormData] = useState({
-    animalId: "",
+    farmId: getFarmId(),
+    animalId: "", 
     animalName: "",
     type: "Chequeo",
     date: new Date().toISOString().split("T")[0],
@@ -25,13 +40,12 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.animalId.trim())
+    if (!formData.animalId)
       newErrors.animalId = "El ID del animal es requerido";
-    if (!formData.animalName.trim())
-      newErrors.animalName = "El nombre es requerido";
+    if (!formData.animalName.trim()) newErrors.animalName = "El nombre es requerido";
+
     if (!formData.date) newErrors.date = "La fecha es requerida";
-    if (!formData.veterinarian.trim())
-      newErrors.veterinarian = "El nombre del veterinario es requerido";
+    // Optional fields depending on strictness
     if (!formData.diagnosis.trim())
       newErrors.diagnosis = "El diagnóstico es requerido";
 
@@ -53,7 +67,14 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
 
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      // Format payload for backend
+      const payload = {
+        ...formData,
+        animalId: Number(formData.animalId), // Ensure numeric
+        farmId: Number(formData.farmId), // Ensure numeric
+        // Add other conversions if needed
+      };
+      await onSubmit(payload);
     } finally {
       setIsSubmitting(false);
     }
@@ -70,17 +91,25 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Hidden Farm ID check */}
+      {!formData.farmId && (
+        <div className="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm mb-4">
+          ⚠️ No se ha detectado una granja seleccionada. Es posible que el
+          registro falle.
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            ID Animal
+            ID Animal (Numérico)
           </label>
           <input
-            type="text"
+            type="number"
             name="animalId"
             value={formData.animalId}
             onChange={handleChange}
-            placeholder="ej. BOV-001"
+            placeholder="Ej. 101"
             className={`w-full px-4 py-2 rounded-xl border ${
               errors.animalId ? "border-red-500 bg-red-50" : "border-gray-200"
             } focus:ring-2 focus:ring-green-500 outline-none transition-all`}
@@ -92,23 +121,22 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre Animal
+            Nombre Animal (Referencia)
           </label>
           <input
             type="text"
             name="animalName"
             value={formData.animalName}
             onChange={handleChange}
+            placeholder="Opcional"
             className={`w-full px-4 py-2 rounded-xl border ${
               errors.animalName ? "border-red-500 bg-red-50" : "border-gray-200"
             } focus:ring-2 focus:ring-green-500 outline-none transition-all`}
           />
-          {errors.animalName && (
-            <p className="text-red-500 text-xs mt-1">{errors.animalName}</p>
-          )}
         </div>
       </div>
 
+      {/* Rest of the form remains similar but ensuring safe handling */}
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -179,9 +207,6 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
                 : "border-gray-200"
             } focus:ring-2 focus:ring-green-500 outline-none`}
           />
-          {errors.veterinarian && (
-            <p className="text-red-500 text-xs mt-1">{errors.veterinarian}</p>
-          )}
         </div>
       </div>
 

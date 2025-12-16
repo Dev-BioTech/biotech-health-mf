@@ -1,85 +1,81 @@
 import apiClient from "../utils/apiClient";
 
 export const healthService = {
-  // Generic method to fetch records based on filter
-  getHealthRecords: async (filter = {}) => {
-    let url = "/HealthEvent"; // Default or finding a way to get all
-    if (filter.farmId) {
-      url = `/HealthEvent/farm/${filter.farmId}`;
-    } else if (filter.animalId) {
-      url = `/HealthEvent/animal/${filter.animalId}`;
-    } else if (filter.batchId) {
-      url = `/HealthEvent/batch/${filter.batchId}`;
-    } else if (filter.type && filter.type !== "all") {
-      url = `/HealthEvent/type/${filter.type}`;
-    } else {
-      if (authStorage) {
-        try {
-          const { state } = JSON.parse(authStorage);
-          if (state?.selectedFarm?.id) {
-            url = `/HealthEvent/farm/${state.selectedFarm.id}`;
-          }
-        } catch (e) {
-          console.error("Error reading selected farm", e);
-        }
-      }
-    }
-
+  // Create a new health event
+  createHealthEvent: async (eventData) => {
     try {
-      const response = await apiClient.get(url);
-      let data = response.data;
-
-      if (filter.type && filter.type !== "all" && !url.includes("/type/")) {
-        data = data.filter((r) => r.type === filter.type);
-      }
-
-      if (filter.search) {
-        const searchLower = filter.search.toLowerCase();
-        data = data.filter(
-          (r) =>
-            (r.animalName &&
-              r.animalName.toLowerCase().includes(searchLower)) ||
-            (r.animalId &&
-              r.animalId.toString().toLowerCase().includes(searchLower))
-        );
-      }
-
-      return data;
+      // POST /api/HealthEvent
+      const response = await apiClient.post("/HealthEvent", eventData);
+      return response.data;
     } catch (error) {
-      console.error("Error fetching health records:", error);
-      return []; // Return empty array on error to prevent crash
+      console.error("Error creating health event:", error);
+      throw error;
     }
   },
 
-  // Create a new record
-  // POST /api/HealthEvent
-  createRecord: async (record) => {
-    const response = await apiClient.post("/HealthEvent", record);
-    return response.data;
+  // Get health events by Farm ID
+  getEventsByFarm: async (farmId) => {
+    try {
+      // GET /api/HealthEvent/farm/{farmId}
+      const response = await apiClient.get(`/HealthEvent/farm/${farmId}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching health events for farm ${farmId}:`, error);
+      throw error;
+    }
   },
 
-  // Get dashboard statistics (Mocked for now or implement if endpoint exists)
-  getDashboardStats: async () => {
-    return {
-      totalAnimals: 0,
-      sickAnimals: 0,
-      pendingVaccines: 0,
-      healthIndex: 100,
-    };
+  // Get health events by Animal ID
+  getEventsByAnimal: async (animalId) => {
+    try {
+      // GET /api/HealthEvent/animal/{animalId}
+      const response = await apiClient.get(`/HealthEvent/animal/${animalId}`);
+      return response.data;
+    } catch (error) {
+      console.error(
+        `Error fetching health events for animal ${animalId}:`,
+        error
+      );
+      throw error;
+    }
   },
 
-  // Get vaccination calendar
-  getVaccinations: async (month, year) => {
-    return [];
+  // Get health events by Batch ID
+  getEventsByBatch: async (batchId) => {
+    try {
+      // GET /api/HealthEvent/batch/{batchId}
+      const response = await apiClient.get(`/HealthEvent/batch/${batchId}`);
+      return response.data;
+    } catch (error) {
+      console.error(
+        `Error fetching health events for batch ${batchId}:`,
+        error
+      );
+      throw error;
+    }
   },
 
-  // Get upcoming events
-  getUpcomingEvents: async () => {
-    return [];
+  // Get health events by Event Type
+  getEventsByType: async (type) => {
+    try {
+      // GET /api/HealthEvent/type/{type}
+      const response = await apiClient.get(`/HealthEvent/type/${type}`);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching health events of type ${type}:`, error);
+      throw error;
+    }
   },
 
-  // Get recent treatments
-  getRecentTreatments: async () => {
+  // Compatibility alias (if needed by existing code, though upgrading UI is better)
+  getHealthRecords: async (filter = {}) => {
+    if (filter.farmId) return healthService.getEventsByFarm(filter.farmId);
+    if (filter.animalId)
+      return healthService.getEventsByAnimal(filter.animalId);
+    if (filter.batchId) return healthService.getEventsByBatch(filter.batchId);
+    if (filter.type) return healthService.getEventsByType(filter.type);
     return [];
   },
 };
+
+export default healthService;
