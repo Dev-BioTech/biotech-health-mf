@@ -78,50 +78,91 @@ export const healthService = {
   },
 
   // Dashboard Stats (Calculated from events for now or Mocked)
+  // Dashboard Stats (Calculated from REAL events)
   getDashboardStats: async (farmId) => {
     try {
-      // Try to get real events to calculate stats
-      if (farmId) {
-        try {
-          const events = await healthService.getEventsByFarm(farmId);
-          // Calculate stats from events
-          const sick = events.filter(
-            (e) => e.type === "SICKNESS" || e.type === "Enfermedad"
-          ).length;
-          const treatments = events.filter(
-            (e) => e.type === "TREATMENT" || e.type === "Tratamiento"
-          ).length;
-          const vaccinations = events.filter(
-            (e) => e.eventType === "Vaccination"
-          ).length; // Check API response structure
+      if (!farmId) throw new Error("Farm ID required");
 
-          return {
-            sickAnimals: sick || Math.floor(Math.random() * 5),
-            treatmentsActive: treatments || Math.floor(Math.random() * 3),
-            vaccinationsPending: vaccinations || Math.floor(Math.random() * 10),
-            healthIndex: 95,
-          };
-        } catch (e) {
-          console.warn("Failed to fetch events for stats, using fallback", e);
-        }
-      }
+      const events = await healthService.getEventsByFarm(farmId);
 
-      // Fallback data
+      // Calculate stats based on eventType from backend
+      const sickAnimals = events.filter(
+        (e) => e.eventType === "SICKNESS" || e.eventType === "Enfermedad"
+      ).length;
+      const treatments = events.filter(
+        (e) => e.eventType === "TREATMENT" || e.eventType === "Tratamiento"
+      ).length;
+
+      // Future vaccinations calculation
+      const today = new Date();
+      const vaccinationsPending = events.filter((e) => {
+        const eventDate = new Date(e.eventDate);
+        return (
+          (e.eventType === "VACCINATION" || e.eventType === "Vacunación") &&
+          eventDate >= today
+        );
+      }).length;
+
       return {
-        sickAnimals: 2,
-        treatmentsActive: 5,
-        vaccinationsPending: 12,
-        healthIndex: 98,
+        sickAnimals,
+        treatmentsActive: treatments,
+        vaccinationsPending,
+        healthIndex: events.length > 0 ? 95 : 100, // Mock index for now
       };
     } catch (error) {
-      console.error("Error getting dashboard stats:", error);
-      // Return safe fallback to prevent UI crash
+      console.warn("Error getting dashboard stats (using fallback 0s):", error);
       return {
         sickAnimals: 0,
         treatmentsActive: 0,
         vaccinationsPending: 0,
         healthIndex: 100,
       };
+    }
+  },
+  // Get Upcoming health events (Filtered from REAL API data)
+  getUpcomingEvents: async (farmId) => {
+    try {
+      const events = await healthService.getEventsByFarm(farmId);
+      const today = new Date();
+
+      return events
+        .filter((e) => new Date(e.eventDate) >= today) // Future events only
+        .sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate)) // Ascending order
+        .slice(0, 5) // Top 5
+        .map((e) => ({
+          date: new Date(e.eventDate).toLocaleDateString(),
+          event: e.notes || e.eventType, // Use notes or type
+          priority: "medium", // Default
+        }));
+    } catch (error) {
+      console.error("Error getting upcoming events:", error);
+      return [];
+    }
+  },
+
+  // Get Recent Treatments (Filtered from REAL API data)
+  getRecentTreatments: async (farmId) => {
+    try {
+      const events = await healthService.getEventsByFarm(farmId);
+      const today = new Date();
+
+      return events
+        .filter(
+          (e) =>
+            (e.eventType === "TREATMENT" || e.eventType === "Tratamiento") &&
+            new Date(e.eventDate) <= today
+        )
+        .sort((a, b) => new Date(b.eventDate) - new Date(a.eventDate)) // Descending order (newest first)
+        .slice(0, 5) // Top 5
+        .map((e) => ({
+          animal: `Animal #${e.animalId}`, // We might need animal name if available
+          treatment: e.notes || "Tratamiento General",
+          date: new Date(e.eventDate).toLocaleDateString(),
+          status: "success",
+        }));
+    } catch (error) {
+      console.error("Error getting recent treatments:", error);
+      return [];
     }
   },
 };
