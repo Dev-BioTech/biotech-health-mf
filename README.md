@@ -1,179 +1,89 @@
-# 🏥 BioTech Health - Gestión de Salud Animal
+# 🩺 BioTech Health Microfrontend
 
-Módulo de control sanitario y registros médicos veterinarios.
+<div align="center">
 
-## 🚀 Características
+  <img src="https://biotech-shell.vercel.app/BioTech.webp" alt="BioTech Logo" width="200" />
+  
+  ![Health Banner](https://capsule-render.vercel.app/api?type=waving&color=ef4444&height=120&section=header&text=Health%20Records&fontSize=70&animation=fadeIn&fontAlignY=40)
 
-- **Registros médicos**: Historial completo de salud
-- **Calendario de vacunación**: Control de vacunas
-- **Tratamientos**: Registro de medicamentos
-- **Diagnósticos**: Base de datos de enfermedades
-- **Alertas sanitarias**: Notificaciones preventivas
-- **Reportes**: Estadísticas de salud del hato
-- **Gestión de veterinarios**: Registro de profesionales
+  <br />
 
-## 🛠️ Tecnologías
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-- React 18
-- Vite + Module Federation
-- React Hook Form + Yup
-- Axios
-- Zustand
-- Tailwind CSS
+  <br />
 
-## 📦 Instalación
+  <a href="https://biotech-shell.vercel.app/">
+    <img src="https://img.shields.io/badge/🚀_Live_App-Access_Platform-ef4444?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+  </a>
+  <a href="https://github.com/Nikotastic/BioTech-Backend">
+    <img src="https://img.shields.io/badge/🔗_Backend_Repo-View_Code-22c55e?style=for-the-badge&logo=github&logoColor=white" alt="Backend Repo" />
+  </a>
 
-```bash
-npm install
-npm run dev  # Puerto 5004
-```
+</div>
 
-## 🔌 Componentes Expuestos
+<br />
 
-```javascript
-// Registros de salud
-import('healthMF/HealthRecords')
+## 📋 Overview
 
-// Calendario de vacunación
-import('healthMF/VaccinationSchedule')
+The **Health Microfrontend** is the digital veterinary clinic of the farm. Through the [Shell Application](https://biotech-shell.vercel.app/), it tracks vaccination schedules, treatments, and medical history with precision.
 
-// Historial de tratamientos
-import('healthMF/TreatmentHistory')
+---
 
-// Store
-import('healthMF/HealthStore')
-```
+## ✨ Features
 
-## 📁 Estructura
+- **💉 Vaccinations**: Schedule and record vaccine administration.
+- **💊 Treatment Log**: Track medication usage and dosage.
+- **🏥 Vet Visits**: Record findings from veterinary inspections.
+- **🚨 Alerts**: Reminders for booster shots or follow-ups.
 
-```
-src/
-├── features/
-│   ├── health-records/
-│   │   ├── components/
-│   │   │   └── HealthRecords.jsx
-│   │   ├── hooks/
-│   │   │   └── useHealthRecords.js
-│   │   └── services/
-│   ├── vaccination/
-│   │   ├── components/
-│   │   │   └── VaccinationSchedule.jsx
-│   │   └── services/
-│   └── treatment/
-│       ├── components/
-│       ├── validations/
-│       └── services/
-├── shared/
-│   ├── store/
-│   │   └── healthStore.js
-│   ├── constants/
-│   │   └── healthConstants.js
-│   └── utils/
-└── App.jsx
-```
+---
 
-## 💉 Estados de Salud
+## 🛠️ Tech Stack
 
-```javascript
-export const HEALTH_STATUS = {
-  HEALTHY: 'Saludable',
-  SICK: 'Enfermo',
-  RECOVERING: 'En Recuperación',
-  CRITICAL: 'Crítico'
-}
-```
+- **Framework**: React 19
+- **Build Tool**: Vite
+- **Styling**: TailwindCSS
+- **State**: Zustand
 
-## 💊 Tipos de Vacunas
+---
 
-```javascript
-export const VACCINE_TYPES = {
-  RABIES: 'Rabia',
-  BRUCELLOSIS: 'Brucelosis',
-  TUBERCULOSIS: 'Tuberculosis',
-  ANTHRAX: 'Ántrax',
-  CLOSTRIDIAL: 'Clostridiosis'
-}
-```
+## 🚀 Getting Started
 
-## 🌍 API Endpoints
+1.  **Clone & Install**
 
-```javascript
-GET    /api/health/records             // Registros médicos
-POST   /api/health/records             // Crear registro
-GET    /api/health/vaccinations        // Vacunaciones
-POST   /api/health/vaccinations        // Programar vacuna
-GET    /api/health/treatments          // Tratamientos
-POST   /api/health/treatments          // Nuevo tratamiento
-GET    /api/health/stats               // Estadísticas
-```
+    ```bash
+    git clone https://github.com/Nikotastic/biotech-health-mf.git
+    npm install
+    ```
 
-## 📋 Registro Médico
+2.  **Run Locally**
+    ```bash
+    npm run dev
+    ```
+    Running on: `http://localhost:5004`
 
-```typescript
-interface HealthRecord {
-  id: number
-  animalId: number
-  date: Date
-  veterinarian: string
-  diagnosis: string
-  symptoms: string[]
-  treatment: string
-  medications: [
-    {
-      name: string
-      dose: string
-      frequency: string
-      duration: number
-    }
-  ]
-  status: string
-  followUpDate?: Date
-  notes?: string
-}
-```
+---
 
-## 📅 Calendario de Vacunación
+## 🤝 Contributing & Credits
 
-```typescript
-interface Vaccination {
-  id: number
-  animalId: number
-  vaccineType: string
-  date: Date
-  nextDose?: Date
-  veterinarian: string
-  batchNumber: string
-  status: 'Pendiente' | 'Completado'
-}
-```
+<div align="center">
 
-## 📊 Reportes de Salud
+**Core Architecture & Development**<br>
+Built with ❤️ by [**@Nikotastic**](https://github.com/Nikotastic)
 
-- Estado general del hato
-- Cobertura de vacunación
-- Incidencia de enfermedades
-- Costos veterinarios
-- Tratamientos activos
+  <br>
 
-## 🔔 Alertas
+**UX/UI Design & Creative Direction**<br>
+Special thanks to [**@J2rkan**](https://github.com/J2rkan) for the premium design contributions.
 
-```javascript
-// Notificaciones automáticas
-- Vacunación próxima (7 días antes)
-- Seguimiento médico pendiente
-- Tratamiento a finalizar
-- Estado crítico de animal
-```
+</div>
 
-## 🚀 Deploy
+<br>
 
-```bash
-npm run build
-vercel --prod
-```
+---
 
-## 📞 Contacto
-
-- Email: health@biotech.com
-- Docs: https://docs.biotech.com/health
-```
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=ef4444&height=100&section=footer" width="100%" />
+</div>
