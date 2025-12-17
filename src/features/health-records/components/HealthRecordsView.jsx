@@ -12,7 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useHealthRecords } from "../hooks/useHealthRecords";
 import { Modal } from "../../../shared/components/Modal";
 import { HealthRecordForm } from "./HealthRecordForm";
-import { useToastStore } from "../../../shared/store/toastStore";
+import alertService from "../../../shared/utils/alertService";
 
 export function HealthRecordsView({ onCreate: onExternalCreate, onEdit }) {
   const {
@@ -27,29 +27,37 @@ export function HealthRecordsView({ onCreate: onExternalCreate, onEdit }) {
   } = useHealthRecords();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const addToast = useToastStore((state) => state.addToast);
 
   const handleCreate = async (formData) => {
     try {
       const success = await createRecord(formData);
       if (success) {
-        addToast(`✅ Registro médico de "${formData.animalName}" creado correctamente`, "success");
+        alertService.success(
+          `Registro médico de "${formData.animalName}" creado correctamente`,
+          "Éxito"
+        );
         setIsModalOpen(false);
       } else {
-        addToast("❌ Error al crear el registro médico", "error");
+        alertService.error("Error al crear el registro médico", "Error");
       }
     } catch (error) {
       console.error("Error creating record:", error);
       const errorMessage = error.response?.data?.message || error.message;
-      
+
       if (error.response?.status === 400) {
-        addToast("⚠️ Datos inválidos. Verifica todos los campos", "warning");
+        alertService.warning(
+          "Datos inválidos. Verifica todos los campos",
+          "Atención"
+        );
       } else if (error.response?.status === 500) {
-        addToast("❌ Error del servidor. Intenta nuevamente", "error");
+        alertService.error("Error del servidor. Intenta nuevamente", "Error");
       } else if (!error.response) {
-        addToast("🔌 No se pudo conectar con el servidor", "error");
+        alertService.error(
+          "No se pudo conectar con el servidor",
+          "Error de Conexión"
+        );
       } else {
-        addToast(`❌ Error: ${errorMessage}`, "error");
+        alertService.error(`Error: ${errorMessage}`, "Error");
       }
     }
   };
