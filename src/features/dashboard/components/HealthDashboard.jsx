@@ -18,8 +18,20 @@ export default function HealthDashboard({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      <div className="space-y-6">
+        <div className="h-48 bg-gray-100 animate-pulse rounded-3xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-40 bg-gray-100 animate-pulse rounded-2xl"
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-64 bg-gray-100 animate-pulse rounded-2xl" />
+          <div className="h-64 bg-gray-100 animate-pulse rounded-2xl" />
+        </div>
       </div>
     );
   }

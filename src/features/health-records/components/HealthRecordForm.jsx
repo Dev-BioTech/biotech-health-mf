@@ -1,24 +1,11 @@
 import { useState, useEffect } from "react";
 import { Save, AlertCircle } from "lucide-react";
+import { authUtils } from "../../../shared/utils/auth";
 
 export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
-  // Try to get farmId from localStorage (auth-storage), similar to other components
-  const getFarmId = () => {
-    const authStorage = localStorage.getItem("auth-storage");
-    if (authStorage) {
-      try {
-        const parsed = JSON.parse(authStorage);
-        return parsed?.state?.selectedFarm?.id;
-      } catch (e) {
-        console.error("Error parsing auth storage", e);
-      }
-    }
-    return "";
-  };
-
   const [formData, setFormData] = useState({
-    farmId: getFarmId(),
-    animalId: "", 
+    farmId: authUtils.getSelectedFarmId(),
+    animalId: "",
     animalName: "",
     type: "Chequeo",
     date: new Date().toISOString().split("T")[0],
@@ -42,7 +29,8 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
     const newErrors = {};
     if (!formData.animalId)
       newErrors.animalId = "El ID del animal es requerido";
-    if (!formData.animalName.trim()) newErrors.animalName = "El nombre es requerido";
+    if (!formData.animalName.trim())
+      newErrors.animalName = "El nombre es requerido";
 
     if (!formData.date) newErrors.date = "La fecha es requerida";
     // Optional fields depending on strictness

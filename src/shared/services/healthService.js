@@ -9,7 +9,7 @@ const MOCK_HEALTH_EVENTS = [
     eventType: "Vacunación",
     date: "2025-12-15",
     description: "Vacuna antiaftosa",
-    veterinarian: "Dr. García"
+    veterinarian: "Dr. García",
   },
   {
     id: "2",
@@ -18,22 +18,22 @@ const MOCK_HEALTH_EVENTS = [
     eventType: "Tratamiento",
     date: "2025-12-20",
     description: "Desparasitación",
-    veterinarian: "Dr. Pérez"
-  }
+    veterinarian: "Dr. Pérez",
+  },
 ];
 
 const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
 
 export const healthService = {
   // POST /api/HealthEvent - Register a new health event
-  createHealthEvent: async (eventData) => {
+  createRecord: async (eventData) => {
     if (USE_MOCK_API) {
-      console.log('🧪 Using MOCK API - creating health event');
-      await new Promise(resolve => setTimeout(resolve, 300));
+      console.log("🧪 Using MOCK API - creating health event");
+      await new Promise((resolve) => setTimeout(resolve, 300));
       const newEvent = {
         id: String(MOCK_HEALTH_EVENTS.length + 1),
         ...eventData,
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split("T")[0],
       };
       MOCK_HEALTH_EVENTS.push(newEvent);
       return newEvent;
@@ -50,16 +50,17 @@ export const healthService = {
   // GET /api/HealthEvent/farm - Get events by farm (Query: fromDate, toDate, eventType)
   getEventsByFarm: async (filters = {}) => {
     if (USE_MOCK_API) {
-      console.log('🧪 Using MOCK API for farm health events');
-      await new Promise(resolve => setTimeout(resolve, 300));
+      console.log("🧪 Using MOCK API for farm health events");
+      await new Promise((resolve) => setTimeout(resolve, 300));
       let events = [...MOCK_HEALTH_EVENTS];
       if (filters.eventType) {
-        events = events.filter(e => e.eventType === filters.eventType);
+        events = events.filter((e) => e.eventType === filters.eventType);
       }
       return events;
     }
     try {
       const params = new URLSearchParams();
+      if (filters.farmId) params.append("farmId", filters.farmId);
       if (filters.fromDate) params.append("fromDate", filters.fromDate);
       if (filters.toDate) params.append("toDate", filters.toDate);
       if (filters.eventType) params.append("eventType", filters.eventType);
@@ -83,7 +84,7 @@ export const healthService = {
     } catch (error) {
       console.error(
         `Error fetching health events for animal ${animalId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -97,7 +98,7 @@ export const healthService = {
     } catch (error) {
       console.error(
         `Error fetching health events for batch ${batchId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -115,32 +116,34 @@ export const healthService = {
   },
 
   // GET /api/HealthEvent/dashboard-stats - Get health dashboard statistics
-  getDashboardStats: async () => {
+  getDashboardStats: async (farmId) => {
     if (USE_MOCK_API) {
-      console.log('🧪 Using MOCK API for dashboard stats');
-      await new Promise(resolve => setTimeout(resolve, 200));
+      console.log("🧪 Using MOCK API for dashboard stats", { farmId });
+      await new Promise((resolve) => setTimeout(resolve, 200));
       return {
         healthy: {
           value: 115,
           total: 120,
-          trend: "+5"
+          trend: "+5",
         },
         treatment: {
           value: 3,
-          trend: "-1"
+          trend: "-1",
         },
         vaccinesPending: {
           value: 5,
-          trend: ""
+          trend: "",
         },
         critical: {
           value: 2,
-          trend: ""
-        }
+          trend: "",
+        },
       };
     }
     try {
-      const response = await apiClient.get("/HealthEvent/dashboard-stats");
+      const response = await apiClient.get(`/HealthEvent/dashboard-stats`, {
+        params: { farmId },
+      });
       return response.data;
     } catch (error) {
       console.warn("Error getting dashboard stats:", error);
@@ -149,20 +152,22 @@ export const healthService = {
         healthy: { value: 0, total: 0, trend: "" },
         treatment: { value: 0, trend: "" },
         vaccinesPending: { value: 0, trend: "" },
-        critical: { value: 0, trend: "" }
+        critical: { value: 0, trend: "" },
       };
     }
   },
 
   // GET /api/HealthEvent/upcoming - Get upcoming health events/treatments
-  getUpcomingEvents: async () => {
+  getUpcomingEvents: async (farmId) => {
     if (USE_MOCK_API) {
-      console.log('🧪 Using MOCK API for upcoming events');
-      await new Promise(resolve => setTimeout(resolve, 200));
+      console.log("🧪 Using MOCK API for upcoming events", { farmId });
+      await new Promise((resolve) => setTimeout(resolve, 200));
       return MOCK_HEALTH_EVENTS.slice(0, 3);
     }
     try {
-      const response = await apiClient.get("/HealthEvent/upcoming");
+      const response = await apiClient.get("/HealthEvent/upcoming", {
+        params: { farmId },
+      });
       return response.data;
     } catch (error) {
       console.error("Error getting upcoming events:", error);
@@ -171,14 +176,16 @@ export const healthService = {
   },
 
   // GET /api/HealthEvent/recent-treatments - Get recent treatments
-  getRecentTreatments: async () => {
+  getRecentTreatments: async (farmId) => {
     if (USE_MOCK_API) {
-      console.log('🧪 Using MOCK API for recent treatments');
-      await new Promise(resolve => setTimeout(resolve, 200));
-      return MOCK_HEALTH_EVENTS.filter(e => e.eventType === 'Tratamiento');
+      console.log("🧪 Using MOCK API for recent treatments", { farmId });
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return MOCK_HEALTH_EVENTS.filter((e) => e.eventType === "Tratamiento");
     }
     try {
-      const response = await apiClient.get("/HealthEvent/recent-treatments");
+      const response = await apiClient.get("/HealthEvent/recent-treatments", {
+        params: { farmId },
+      });
       return response.data;
     } catch (error) {
       console.error("Error getting recent treatments:", error);
@@ -187,8 +194,12 @@ export const healthService = {
   },
 
   // Helper: Get vaccinations (events of type "Vaccination")
-  getVaccinations: async (filters = {}) => {
-    return healthService.getEventsByType("Vaccination");
+  getVaccinations: async (month, year, farmId) => {
+    return healthService.getEventsByType("Vaccination", {
+      month,
+      year,
+      farmId,
+    });
   },
 
   // Compatibility alias for existing code

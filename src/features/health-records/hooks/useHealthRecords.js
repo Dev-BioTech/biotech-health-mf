@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { healthService } from "../../../shared/services/healthService";
+import { authUtils } from "../../../shared/utils/auth";
 
 export const useHealthRecords = () => {
   const [records, setRecords] = useState([]);
@@ -16,9 +17,11 @@ export const useHealthRecords = () => {
     const fetchRecords = async () => {
       try {
         setLoading(true);
+        const farmId = authUtils.getSelectedFarmId();
         const data = await healthService.getHealthRecords({
           search: searchTerm,
           type: filterType,
+          farmId,
         });
         setRecords(data);
         setItems(data); // Sync items

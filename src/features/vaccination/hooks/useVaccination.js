@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { healthService } from "../../../shared/services/healthService";
+import { authUtils } from "../../../shared/utils/auth";
 
 export const useVaccination = () => {
   const [vaccinations, setVaccinations] = useState([]);
@@ -13,9 +14,11 @@ export const useVaccination = () => {
     const fetchVaccinations = async () => {
       try {
         setLoading(true);
+        const farmId = authUtils.getSelectedFarmId();
         const data = await healthService.getVaccinations(
           currentMonth,
-          currentYear
+          currentYear,
+          farmId,
         );
         setVaccinations(data);
         setError(null);
@@ -58,7 +61,7 @@ export const useVaccination = () => {
     .slice(0, 5);
 
   const completedThisMonth = vaccinations.filter(
-    (v) => v.status === "completed"
+    (v) => v.status === "completed",
   ).length; // Simulado, debería revisar fecha
 
   return {
