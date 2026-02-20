@@ -20,8 +20,7 @@ export function VaccinationForm({ onSubmit, onCancel }) {
     if (!formData.date) newErrors.date = "La fecha es requerida";
 
     if (new Date(formData.date) < new Date(new Date().setHours(0, 0, 0, 0))) {
-      // Allow past dates only if status is completed?
-      // For now, simple validation
+      newErrors.date = "No puedes programar vacunas en fechas pasadas";
     }
 
     setErrors(newErrors);
@@ -96,6 +95,7 @@ export function VaccinationForm({ onSubmit, onCancel }) {
             name="date"
             value={formData.date}
             onChange={handleChange}
+            min={new Date().toISOString().split("T")[0]}
             className={`w-full px-4 py-2 rounded-xl border ${
               errors.date ? "border-red-500 bg-red-50" : "border-gray-200"
             } focus:ring-2 focus:ring-green-500 outline-none`}

@@ -11,7 +11,7 @@ export default defineConfig({
       // Alias to access shared services from Shell
       "@shared-services": path.resolve(
         __dirname,
-        "../biotech-shell/src/shared/services"
+        "../biotech-shell/src/shared/services",
       ),
     },
   },
@@ -27,6 +27,9 @@ export default defineConfig({
     federation({
       name: "healthMF",
       filename: "remoteEntry.js",
+      remotes: {
+        authMF: "http://localhost:5001/assets/remoteEntry.js",
+      },
       exposes: {
         "./HealthDashboard":
           "./src/features/dashboard/components/HealthDashboard.jsx",

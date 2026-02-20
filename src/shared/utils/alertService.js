@@ -1,7 +1,15 @@
 import Swal from "sweetalert2";
 
+// Bus de eventos para comunicación entre microfrontends
+const addToast = (message, type) => {
+  window.dispatchEvent(
+    new CustomEvent("biotech-toast", {
+      detail: { message, type },
+    }),
+  );
+};
 
-// Custom base configuration
+// Custom base configuration for SweetAlert (Modals)
 const baseConfig = {
   customClass: {
     popup: "biotech-alert-popup",
@@ -15,7 +23,7 @@ const baseConfig = {
   allowEscapeKey: true,
 };
 
-// Custom colors for each type
+// Custom colors for SweetAlert icons
 const alertColors = {
   success: "#10b981",
   error: "#ef4444",
@@ -24,64 +32,36 @@ const alertColors = {
   question: "#8b5cf6",
 };
 
-// Success alert
+// Success Notification (Unified)
 export const showSuccess = (message, title = "¡Éxito!") => {
-  return Swal.fire({
-    ...baseConfig,
-    icon: "success",
-    title,
-    text: message,
-    iconColor: alertColors.success,
-    confirmButtonText: "Aceptar",
-    timer: 3000,
-    timerProgressBar: true,
-  });
+  addToast(message, "success");
+  return Promise.resolve(); // Mantener compatibilidad con llamadas .then()
 };
 
-// Error alert
+// Error Notification (Unified)
 export const showError = (message, title = "Error") => {
-  return Swal.fire({
-    ...baseConfig,
-    icon: "error",
-    title,
-    text: message,
-    iconColor: alertColors.error,
-    confirmButtonText: "Entendido",
-  });
+  addToast(message, "error");
+  return Promise.resolve();
 };
 
-// Warning alert
-export const showWarning = (message, title = "Advertencia") => {
-  return Swal.fire({
-    ...baseConfig,
-    icon: "warning",
-    title,
-    text: message,
-    iconColor: alertColors.warning,
-    confirmButtonText: "Aceptar",
-  });
-};
-
-// Info alert
+// Info Notification (Unified)
 export const showInfo = (message, title = "Información") => {
-  return Swal.fire({
-    ...baseConfig,
-    icon: "info",
-    title,
-    text: message,
-    iconColor: alertColors.info,
-    confirmButtonText: "Entendido",
-    timer: 4000,
-    timerProgressBar: true,
-  });
+  addToast(message, "info");
+  return Promise.resolve();
 };
 
-// Confirm alert
+// Warning Notification (Unified)
+export const showWarning = (message, title = "Advertencia") => {
+  addToast(message, "warning");
+  return Promise.resolve();
+};
+
+// Las confirmaciones siguen usando Swal por ser modales de interrupción
 export const showConfirm = (
   message,
   title = "¿Estás seguro?",
   confirmText = "Sí, confirmar",
-  cancelText = "Cancelar"
+  cancelText = "Cancelar",
 ) => {
   return Swal.fire({
     ...baseConfig,
@@ -99,7 +79,7 @@ export const showConfirm = (
 // Delete confirm alert
 export const showDeleteConfirm = (
   itemName = "este elemento",
-  message = "Esta acción no se puede deshacer"
+  message = "Esta acción no se puede deshacer",
 ) => {
   return Swal.fire({
     ...baseConfig,
@@ -118,7 +98,7 @@ export const showDeleteConfirm = (
 // Loading alert
 export const showLoading = (
   message = "Procesando...",
-  title = "Por favor espera"
+  title = "Por favor espera",
 ) => {
   return Swal.fire({
     ...baseConfig,
@@ -138,28 +118,13 @@ export const closeLoading = () => {
   Swal.close();
 };
 
-// Toast notification 
-export const showToast = (message, type = "success", position = "top-end") => {
-  const Toast = Swal.mixin({
-    toast: true,
-    position,
-    showConfirmButton: false,
-    timer: 3000,
-    timerProgressBar: true,
-    didOpen: (toast) => {
-      toast.addEventListener("mouseenter", Swal.stopTimer);
-      toast.addEventListener("mouseleave", Swal.resumeTimer);
-    },
-  });
-
-  return Toast.fire({
-    icon: type,
-    title: message,
-    iconColor: alertColors[type] || alertColors.info,
-  });
+// Toast notification alias for unified system
+export const showToast = (message, type = "success") => {
+  addToast(message, type);
+  return Promise.resolve();
 };
 
-// Custom alert
+// Custom alert (Mantiene Swal para casos complejos)
 export const showCustomAlert = (options) => {
   return Swal.fire({
     ...baseConfig,

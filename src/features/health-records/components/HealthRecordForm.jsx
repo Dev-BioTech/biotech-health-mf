@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Save, AlertCircle } from "lucide-react";
-import { authUtils } from "../../../shared/utils/auth";
+import { authUtils } from "@shared/utils/auth";
 
 export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
   const [formData, setFormData] = useState({
@@ -12,7 +12,7 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
     veterinarian: "",
     diagnosis: "",
     treatment: "",
-    status: "Completado",
+    status: "Pendiente",
     description: "",
   });
 
@@ -21,7 +21,17 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
 
   useEffect(() => {
     if (initialData) {
-      setFormData(initialData);
+      // Normalizar fecha para el input type="date" (YYYY-MM-DD)
+      const normalizedDate = initialData.date
+        ? initialData.date.split("T")[0]
+        : "";
+
+      setFormData({
+        ...initialData,
+        date: normalizedDate,
+        // Asegurar que farmId persista si viene en initialData o usar el actual
+        farmId: initialData.farmId || authUtils.getSelectedFarmId(),
+      });
     }
   }, [initialData]);
 
@@ -30,19 +40,22 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
     if (!formData.animalId)
       newErrors.animalId = "El ID del animal es requerido";
     if (!formData.animalName.trim())
-      newErrors.animalName = "El nombre es requerido";
+      newErrors.animalName = "El nombre del animal es requerido";
 
     if (!formData.date) newErrors.date = "La fecha es requerida";
-    // Optional fields depending on strictness
     if (!formData.diagnosis.trim())
       newErrors.diagnosis = "El diagnóstico es requerido";
+
+    if (new Date(formData.date) < new Date(new Date().setHours(0, 0, 0, 0))) {
+      newErrors.date = "No puedes registrar eventos en fechas pasadas";
+    }
 
     if (
       new Date(formData.date) > new Date() &&
       formData.status === "Completado"
     ) {
-      newErrors.date =
-        "Una fecha futura no puede estar marcada como completada";
+      newErrors.status =
+        "Para citas futuras, por favor usa 'Pendiente'. Podrás marcarla como 'Completada' el día del registro.";
     }
 
     setErrors(newErrors);
@@ -55,14 +68,21 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
 
     setIsSubmitting(true);
     try {
-      // Format payload for backend
+      // Preparar payload asegurando tipos de datos correctos
       const payload = {
         ...formData,
-        animalId: Number(formData.animalId), // Ensure numeric
-        farmId: Number(formData.farmId), // Ensure numeric
-        // Add other conversions if needed
+        animalId: formData.animalId ? Number(formData.animalId) : null,
+        farmId: formData.farmId
+          ? Number(formData.farmId)
+          : Number(authUtils.getSelectedFarmId()),
       };
       await onSubmit(payload);
+    } catch (error) {
+      console.error("Error en el formulario:", error);
+      setErrors((prev) => ({
+        ...prev,
+        submit: "Error al procesar los datos del formulario",
+      }));
     } finally {
       setIsSubmitting(false);
     }
@@ -87,10 +107,13 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            ID Animal (Numérico)
+          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
+            ID Animal{" "}
+            <span className="text-[10px] text-gray-400 font-normal">
+              (Numérico)
+            </span>
           </label>
           <input
             type="number"
@@ -100,41 +123,41 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
             placeholder="Ej. 101"
             className={`w-full px-4 py-2 rounded-xl border ${
               errors.animalId ? "border-red-500 bg-red-50" : "border-gray-200"
-            } focus:ring-2 focus:ring-green-500 outline-none transition-all`}
+            } focus:ring-2 focus:ring-green-500 outline-none transition-all text-sm`}
           />
           {errors.animalId && (
-            <p className="text-red-500 text-xs mt-1">{errors.animalId}</p>
+            <p className="text-red-500 text-[10px] mt-1">{errors.animalId}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Nombre Animal (Referencia)
+          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
+            Nombre Animal
           </label>
           <input
             type="text"
             name="animalName"
             value={formData.animalName}
             onChange={handleChange}
-            placeholder="Opcional"
+            placeholder="Ej. Vaca Luna"
             className={`w-full px-4 py-2 rounded-xl border ${
               errors.animalName ? "border-red-500 bg-red-50" : "border-gray-200"
-            } focus:ring-2 focus:ring-green-500 outline-none transition-all`}
+            } focus:ring-2 focus:ring-green-500 outline-none transition-all text-sm`}
           />
         </div>
       </div>
 
       {/* Rest of the form remains similar but ensuring safe handling */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
             Tipo de Registro
           </label>
           <select
             name="type"
             value={formData.type}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none"
+            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none text-sm"
           >
             <option value="Chequeo">Chequeo</option>
             <option value="Vacunación">Vacunación</option>
@@ -145,25 +168,33 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
             Estado
           </label>
           <select
             name="status"
             value={formData.status}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none"
+            className={`w-full px-4 py-2 rounded-xl border ${
+              errors.status ? "border-red-500 bg-red-50" : "border-gray-200"
+            } focus:ring-2 focus:ring-green-500 outline-none text-sm`}
           >
-            <option value="Completado">Completado</option>
-            <option value="En Curso">En Curso</option>
             <option value="Pendiente">Pendiente</option>
+            <option value="En Curso">En Curso</option>
+            <option value="Completado">Completado</option>
+            <option value="Cancelado">Cancelado</option>
           </select>
+          {errors.status && (
+            <p className="text-red-500 text-[10px] mt-1 leading-tight">
+              {errors.status}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
             Fecha
           </label>
           <input
@@ -171,17 +202,18 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
             name="date"
             value={formData.date}
             onChange={handleChange}
+            min={new Date().toISOString().split("T")[0]}
             className={`w-full px-4 py-2 rounded-xl border ${
               errors.date ? "border-red-500 bg-red-50" : "border-gray-200"
-            } focus:ring-2 focus:ring-green-500 outline-none`}
+            } focus:ring-2 focus:ring-green-500 outline-none text-sm`}
           />
           {errors.date && (
-            <p className="text-red-500 text-xs mt-1">{errors.date}</p>
+            <p className="text-red-500 text-[10px] mt-1">{errors.date}</p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
             Veterinario
           </label>
           <input
@@ -189,11 +221,8 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
             name="veterinarian"
             value={formData.veterinarian}
             onChange={handleChange}
-            className={`w-full px-4 py-2 rounded-xl border ${
-              errors.veterinarian
-                ? "border-red-500 bg-red-50"
-                : "border-gray-200"
-            } focus:ring-2 focus:ring-green-500 outline-none`}
+            placeholder="Nombre del profesional"
+            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none text-sm"
           />
         </div>
       </div>
