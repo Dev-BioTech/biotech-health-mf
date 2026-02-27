@@ -106,5 +106,36 @@ export const useVaccination = () => {
     nextMonth,
     previousMonth,
     scheduleVaccination,
+    updateVaccination: async (id, vaccinationData) => {
+      try {
+        setLoading(true);
+        const payload = {
+          ...vaccinationData,
+          animalName: vaccinationData.animal,
+          treatment: vaccinationData.vaccine,
+          description: `Vacunación: ${vaccinationData.vaccine} para ${vaccinationData.animal}`,
+        };
+
+        const updatedRecord = await healthService.updateRecord(id, payload);
+
+        alertService.success(
+          `Vacunación para ${vaccinationData.animal} actualizada correctamente`,
+          "Éxito",
+        );
+
+        setVaccinations((prev) =>
+          prev.map((v) =>
+            v.id === id ? { ...v, ...updatedRecord, ...payload } : v,
+          ),
+        );
+        return true;
+      } catch (err) {
+        console.error("Error updating vaccination:", err);
+        alertService.error("Error al actualizar la vacunación", "Error");
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
   };
 };
