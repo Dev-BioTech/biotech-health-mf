@@ -94,13 +94,21 @@ export function HealthRecordsView({
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "Completado":
+    const s = status?.toLowerCase();
+    switch (s) {
+      case "completado":
+      case "completed":
         return "bg-green-100 text-green-700 border-green-200";
-      case "En Curso":
+      case "en curso":
+      case "in progress":
         return "bg-yellow-100 text-yellow-700 border-yellow-200";
-      case "Pendiente":
+      case "pendiente":
+      case "pending":
         return "bg-red-100 text-red-700 border-red-200";
+      case "cancelado":
+      case "canceled":
+      case "cancelled":
+        return "bg-gray-100 text-gray-700 border-gray-200";
       default:
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
@@ -312,7 +320,9 @@ export function HealthRecordsView({
 
                   {/* Edit button at the bottom right */}
                   {record.status !== "Completado" &&
-                    record.status !== "Cancelado" && (
+                    record.status !== "completed" &&
+                    record.status !== "Cancelado" &&
+                    record.status !== "canceled" && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
