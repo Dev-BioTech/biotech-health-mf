@@ -1,96 +1,71 @@
-import apiService from "@shared-services/ApiService";
+import apiClient from "../utils/apiClient";
 
 export const healthService = {
-  // POST /api/HealthEvent - Register a new health event
-  createHealthEvent: async (eventData) => {
-    try {
-      const response = await apiService.post("/HealthEvent", eventData);
-      return response.data;
-    } catch (error) {
-      console.error("Error creating health event:", error);
-      throw error;
-    }
+  // ── POST /api/HealthEvent ──────────────────────────────────────────────
+  createRecord: async (eventData) => {
+    const response = await apiClient.post("/HealthEvent", eventData);
+    return response.data;
   },
 
-  // GET /api/HealthEvent/farm - Get events by farm (Query: fromDate, toDate, eventType)
+  // ── GET /api/HealthEvent/farm ──────────────────────────────────────────
+  // Query: page, pageSize
   getEventsByFarm: async (filters = {}) => {
-    try {
-      const params = new URLSearchParams();
-      if (filters.fromDate) params.append("fromDate", filters.fromDate);
-      if (filters.toDate) params.append("toDate", filters.toDate);
-      if (filters.eventType) params.append("eventType", filters.eventType);
-
-      const url = params.toString()
-        ? `/HealthEvent/farm?${params.toString()}`
-        : "/HealthEvent/farm";
-      const response = await apiService.get(url);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching health events for farm:", error);
-      throw error;
-    }
+    const params = new URLSearchParams();
+    if (filters.page) params.append("page", filters.page);
+    if (filters.pageSize) params.append("pageSize", filters.pageSize);
+    const qs = params.toString();
+    const response = await apiClient.get(
+      `/HealthEvent/farm${qs ? `?${qs}` : ""}`,
+    );
+    return response.data;
   },
 
-  // GET /api/HealthEvent/animal/{animalId} - Get events for an animal
-  getEventsByAnimal: async (animalId) => {
-    try {
-      const response = await apiService.get(`/HealthEvent/animal/${animalId}`);
-      return response.data;
-    } catch (error) {
-      console.error(
-        `Error fetching health events for animal ${animalId}:`,
-        error
-      );
-      throw error;
-    }
+  // ── GET /api/HealthEvent/animal/{animalId} ────────────────────────────
+  getEventsByAnimal: async (animalId, params = {}) => {
+    const response = await apiClient.get(`/HealthEvent/animal/${animalId}`, {
+      params,
+    });
+    return response.data;
   },
 
-  // GET /api/HealthEvent/batch/{batchId} - Get events for a batch
-  getEventsByBatch: async (batchId) => {
-    try {
-      const response = await apiService.get(`/HealthEvent/batch/${batchId}`);
-      return response.data;
-    } catch (error) {
-      console.error(
-        `Error fetching health events for batch ${batchId}:`,
-        error
-      );
-      throw error;
-    }
+  // ── GET /api/HealthEvent/batch/{batchId} ──────────────────────────────
+  getEventsByBatch: async (batchId, params = {}) => {
+    const response = await apiClient.get(`/HealthEvent/batch/${batchId}`, {
+      params,
+    });
+    return response.data;
   },
 
-  // GET /api/HealthEvent/type/{type} - Get events by type
-  getEventsByType: async (type) => {
-    try {
-      const response = await apiService.get(`/HealthEvent/type/${type}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error fetching health events of type ${type}:`, error);
-      throw error;
-    }
+  // ── GET /api/HealthEvent/type/{type} ──────────────────────────────────
+  getEventsByType: async (type, params = {}) => {
+    const response = await apiClient.get(`/HealthEvent/type/${type}`, {
+      params,
+    });
+    return response.data;
   },
 
-  // GET /api/HealthEvent/dashboard-stats - Get health dashboard statistics
+  // ── GET /api/HealthEvent/dashboard-stats ──────────────────────────────
   getDashboardStats: async () => {
     try {
-      const response = await apiService.get("/HealthEvent/dashboard-stats");
+      const response = await apiClient.get("/HealthEvent/dashboard-stats");
       return response.data;
     } catch (error) {
       console.warn("Error getting dashboard stats:", error);
-      // Fallback structure in case of error
       return {
-        sickAnimals: 0,
-        treatmentsActive: 0,
-        vaccinationsPending: 0,
-        healthIndex: 100,
+        healthy: { value: 0, total: 0, trend: "" },
+        treatment: { value: 0, trend: "" },
+        vaccinesPending: { value: 0, trend: "" },
+        critical: { value: 0, trend: "" },
       };
     }
   },
 
-  // GET /api/HealthEvent/upcoming - Get upcoming health events/treatments
-  getUpcomingEvents: async () => {
+  // ── GET /api/HealthEvent/upcoming ─────────────────────────────────────
+  getUpcomingEvents: async (limit) => {
     try {
-      const response = await apiService.get("/HealthEvent/upcoming");
+      const response = await apiClient.get("/HealthEvent/upcoming", {
+        params: limit ? { limit } : undefined,
+      });
       return response.data;
     } catch (error) {
       console.error("Error getting upcoming events:", error);
@@ -98,10 +73,12 @@ export const healthService = {
     }
   },
 
-  // GET /api/HealthEvent/recent-treatments - Get recent treatments
-  getRecentTreatments: async () => {
+  // ── GET /api/HealthEvent/recent-treatments ────────────────────────────
+  getRecentTreatments: async (limit) => {
     try {
-      const response = await apiService.get("/HealthEvent/recent-treatments");
+      const response = await apiClient.get("/HealthEvent/recent-treatments", {
+        params: limit ? { limit } : undefined,
+      });
       return response.data;
     } catch (error) {
       console.error("Error getting recent treatments:", error);
@@ -109,18 +86,18 @@ export const healthService = {
     }
   },
 
-  // Helper: Get vaccinations (events of type "Vaccination")
-  getVaccinations: async (filters = {}) => {
-    return healthService.getEventsByType("Vaccination");
+  // ── Helpers / Aliases ─────────────────────────────────────────────────
+  getVaccinations: async (month, year) => {
+    return healthService.getEventsByType("Vacunación", { month, year });
   },
 
-  // Compatibility alias for existing code
   getHealthRecords: async (filter = {}) => {
     if (filter.animalId)
       return healthService.getEventsByAnimal(filter.animalId);
     if (filter.batchId) return healthService.getEventsByBatch(filter.batchId);
-    if (filter.type) return healthService.getEventsByType(filter.type);
-    // Default to farm events with filters
+    if (filter.type && filter.type !== "all") {
+      return healthService.getEventsByType(filter.type, filter);
+    }
     return healthService.getEventsByFarm(filter);
   },
 };

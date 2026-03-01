@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { healthService } from "../../../shared/services/healthService";
+import { healthService } from "@shared/services/healthService";
+import { authUtils } from "@shared/utils/auth";
+import alertService from "@shared/utils/alertService";
 
 export const useVaccination = () => {
   const [vaccinations, setVaccinations] = useState([]);
@@ -13,9 +15,11 @@ export const useVaccination = () => {
     const fetchVaccinations = async () => {
       try {
         setLoading(true);
+        const farmId = authUtils.getSelectedFarmId();
         const data = await healthService.getVaccinations(
           currentMonth,
-          currentYear
+          currentYear,
+          farmId,
         );
         setVaccinations(data);
         setError(null);
@@ -31,8 +35,38 @@ export const useVaccination = () => {
   }, [currentMonth, currentYear]);
 
   const scheduleVaccination = async (vaccinationData) => {
-    // Implementar lógica de programación
-    console.log("Programando vacunación:", vaccinationData);
+    try {
+      setLoading(true);
+      const farmId = authUtils.getSelectedFarmId();
+
+      const payload = {
+        ...vaccinationData,
+        farmId: Number(farmId),
+        eventType: "Vacunación",
+        type: "Vacunación",
+        animalName: vaccinationData.animal,
+        diagnosis: "Vacunación Programada",
+        treatment: vaccinationData.vaccine,
+        description: `Vacunación: ${vaccinationData.vaccine} para ${vaccinationData.animal}`,
+      };
+
+      const newRecord = await healthService.createRecord(payload);
+
+      alertService.success(
+        `Vacunación programada correctamente para ${vaccinationData.animal}`,
+        "Éxito",
+      );
+
+      // Actualizar estado local inmediatamente para evitar saltos
+      setVaccinations((prev) => [...prev, { ...newRecord, ...payload }]);
+      return true;
+    } catch (err) {
+      console.error("Error scheduling vaccination:", err);
+      alertService.error("Error al programar la vacunación", "Error");
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const nextMonth = () => {
@@ -58,7 +92,7 @@ export const useVaccination = () => {
     .slice(0, 5);
 
   const completedThisMonth = vaccinations.filter(
-    (v) => v.status === "completed"
+    (v) => v.status === "completed",
   ).length; // Simulado, debería revisar fecha
 
   return {
@@ -72,5 +106,36 @@ export const useVaccination = () => {
     nextMonth,
     previousMonth,
     scheduleVaccination,
+    updateVaccination: async (id, vaccinationData) => {
+      try {
+        setLoading(true);
+        const payload = {
+          ...vaccinationData,
+          animalName: vaccinationData.animal,
+          treatment: vaccinationData.vaccine,
+          description: `Vacunación: ${vaccinationData.vaccine} para ${vaccinationData.animal}`,
+        };
+
+        const updatedRecord = await healthService.updateRecord(id, payload);
+
+        alertService.success(
+          `Vacunación para ${vaccinationData.animal} actualizada correctamente`,
+          "Éxito",
+        );
+
+        setVaccinations((prev) =>
+          prev.map((v) =>
+            v.id === id ? { ...v, ...updatedRecord, ...payload } : v,
+          ),
+        );
+        return true;
+      } catch (err) {
+        console.error("Error updating vaccination:", err);
+        alertService.error("Error al actualizar la vacunación", "Error");
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
   };
 };
