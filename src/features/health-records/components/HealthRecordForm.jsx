@@ -21,7 +21,6 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
 
   useEffect(() => {
     if (initialData) {
-      // Normalizar fecha para el input type="date" (YYYY-MM-DD)
       const normalizedDate = initialData.date
         ? initialData.date.split("T")[0]
         : "";
@@ -29,7 +28,6 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
       setFormData({
         ...initialData,
         date: normalizedDate,
-        // Asegurar que farmId persista si viene en initialData o usar el actual
         farmId: initialData.farmId || authUtils.getSelectedFarmId(),
       });
     }
@@ -68,7 +66,6 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
 
     setIsSubmitting(true);
     try {
-      // Preparar payload asegurando tipos de datos correctos
       const payload = {
         ...formData,
         animalId: formData.animalId ? Number(formData.animalId) : null,
@@ -91,28 +88,31 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when writing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: null }));
     }
   };
 
+  const inputStyles =
+    "w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-white focus:ring-4 focus:ring-green-500/5 focus:border-green-500/30 outline-none transition-all font-semibold text-gray-800 placeholder:text-gray-300 shadow-sm text-sm";
+  const labelStyles =
+    "flex flex-col gap-1 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-1";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Hidden Farm ID check */}
+    <form onSubmit={handleSubmit} className="space-y-6">
       {!formData.farmId && (
-        <div className="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-sm mb-4">
+        <div className="bg-yellow-50/80 border border-yellow-200 text-yellow-800 p-4 rounded-2xl text-xs font-bold tracking-wide uppercase shadow-sm">
           ⚠️ No se ha detectado una granja seleccionada. Es posible que el
           registro falle.
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-            ID Animal{" "}
-            <span className="text-[10px] text-gray-400 font-normal">
-              (Numérico)
+          <label className={labelStyles}>
+            ID Animal
+            <span className="text-[9px] text-gray-300 tracking-normal">
+              (NUMÉRICO)
             </span>
           </label>
           <input
@@ -121,183 +121,169 @@ export function HealthRecordForm({ onSubmit, onCancel, initialData = null }) {
             value={formData.animalId}
             onChange={handleChange}
             placeholder="Ej. 101"
-            className={`w-full px-4 py-2 rounded-xl border ${
-              errors.animalId ? "border-red-500 bg-red-50" : "border-gray-200"
-            } focus:ring-2 focus:ring-green-500 outline-none transition-all text-sm`}
+            className={`${inputStyles} ${errors.animalId ? "border-red-200" : ""}`}
           />
           {errors.animalId && (
-            <p className="text-red-500 text-[10px] mt-1">{errors.animalId}</p>
+            <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide mt-1 px-1">
+              {errors.animalId}
+            </p>
           )}
         </div>
 
         <div>
-          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-            Nombre Animal
-          </label>
+          <label className={labelStyles}>Nombre Animal</label>
           <input
             type="text"
             name="animalName"
             value={formData.animalName}
             onChange={handleChange}
             placeholder="Ej. Vaca Luna"
-            className={`w-full px-4 py-2 rounded-xl border ${
-              errors.animalName ? "border-red-500 bg-red-50" : "border-gray-200"
-            } focus:ring-2 focus:ring-green-500 outline-none transition-all text-sm`}
+            className={`${inputStyles} ${errors.animalName ? "border-red-200" : ""}`}
           />
+          {errors.animalName && (
+            <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide mt-1 px-1">
+              {errors.animalName}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Rest of the form remains similar but ensuring safe handling */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-            Tipo de Registro
-          </label>
+          <label className={labelStyles}>Tipo de Registro</label>
           <select
             name="type"
             value={formData.type}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none text-sm"
+            className={inputStyles}
           >
-            <option value="Chequeo">Chequeo</option>
-            <option value="Vacunación">Vacunación</option>
-            <option value="Tratamiento">Tratamiento</option>
-            <option value="Desparasitación">Desparasitación</option>
-            <option value="Emergencia">Emergencia</option>
+            <option value="Chequeo">CHEQUEO</option>
+            <option value="Vacunación">VACUNACIÓN</option>
+            <option value="Tratamiento">TRATAMIENTO</option>
+            <option value="Desparasitación">DESPARASITACIÓN</option>
+            <option value="Emergencia">EMERGENCIA</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-            Estado
-          </label>
+          <label className={labelStyles}>Estado</label>
           <select
             name="status"
             value={formData.status}
             onChange={handleChange}
-            className={`w-full px-4 py-2 rounded-xl border ${
-              errors.status ? "border-red-500 bg-red-50" : "border-gray-200"
-            } focus:ring-2 focus:ring-green-500 outline-none text-sm`}
+            className={`${inputStyles} ${errors.status ? "border-red-200" : ""}`}
           >
-            <option value="Pendiente">Pendiente</option>
-            <option value="En Curso">En Curso</option>
-            <option value="Completado">Completado</option>
-            <option value="Cancelado">Cancelado</option>
+            <option value="Pendiente">PENDIENTE</option>
+            <option value="En Curso">EN CURSO</option>
+            <option value="Completado">COMPLETADO</option>
+            <option value="Cancelado">CANCELADO</option>
           </select>
           {errors.status && (
-            <p className="text-red-500 text-[10px] mt-1 leading-tight">
+            <p className="text-red-500 text-[10px] font-bold tracking-wide mt-1 px-1 leading-tight">
               {errors.status}
             </p>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-            Fecha
-          </label>
+          <label className={labelStyles}>Fecha</label>
           <input
             type="date"
             name="date"
             value={formData.date}
             onChange={handleChange}
             min={new Date().toISOString().split("T")[0]}
-            className={`w-full px-4 py-2 rounded-xl border ${
-              errors.date ? "border-red-500 bg-red-50" : "border-gray-200"
-            } focus:ring-2 focus:ring-green-500 outline-none text-sm`}
+            className={`${inputStyles} ${errors.date ? "border-red-200" : ""}`}
           />
           {errors.date && (
-            <p className="text-red-500 text-[10px] mt-1">{errors.date}</p>
+            <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide mt-1 px-1">
+              {errors.date}
+            </p>
           )}
         </div>
 
         <div>
-          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-            Veterinario
-          </label>
+          <label className={labelStyles}>Veterinario</label>
           <input
             type="text"
             name="veterinarian"
             value={formData.veterinarian}
             onChange={handleChange}
             placeholder="Nombre del profesional"
-            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none text-sm"
+            className={inputStyles}
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Diagnóstico
-        </label>
+        <label className={labelStyles}>Diagnóstico</label>
         <input
           type="text"
           name="diagnosis"
           value={formData.diagnosis}
           onChange={handleChange}
-          className={`w-full px-4 py-2 rounded-xl border ${
-            errors.diagnosis ? "border-red-500 bg-red-50" : "border-gray-200"
-          } focus:ring-2 focus:ring-green-500 outline-none`}
+          placeholder="Descripción clínica breve"
+          className={`${inputStyles} ${errors.diagnosis ? "border-red-200" : ""}`}
         />
         {errors.diagnosis && (
-          <p className="text-red-500 text-xs mt-1">{errors.diagnosis}</p>
+          <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide mt-1 px-1">
+            {errors.diagnosis}
+          </p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Descripción / Notas
-        </label>
+        <label className={labelStyles}>Descripción / Notas</label>
         <textarea
           name="description"
           value={formData.description}
           onChange={handleChange}
           rows="3"
-          className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none resize-none"
+          placeholder="Detalles adicionales..."
+          className={`${inputStyles} resize-none`}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Tratamiento Generado
-        </label>
+        <label className={labelStyles}>Tratamiento Generado</label>
         <textarea
           name="treatment"
           value={formData.treatment}
           onChange={handleChange}
           rows="2"
           placeholder="Medicamentos o acciones a seguir..."
-          className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none resize-none"
+          className={`${inputStyles} resize-none`}
         />
       </div>
 
       {errors.submit && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-xl flex items-center gap-2 text-sm">
-          <AlertCircle className="w-4 h-4" />
+        <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-2xl flex items-center gap-3 text-xs font-bold uppercase tracking-wider shadow-sm">
+          <AlertCircle className="w-5 h-5" />
           {errors.submit}
         </div>
       )}
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex gap-4 pt-6 border-t border-gray-50">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors font-medium"
+          className="w-1/3 px-4 py-4 rounded-xl text-gray-400 hover:text-gray-900 font-black text-[10px] uppercase tracking-widest transition-all text-center"
         >
-          Cancelar
+          DESCARTAR
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl shadow-lg transition-all font-medium flex items-center justify-center gap-2"
+          className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl md:rounded-[1.25rem] bg-[#1a5a35] hover:bg-[#134428] text-white font-black text-[11px] md:text-[13px] uppercase tracking-[0.2em] shadow-xl md:shadow-2xl shadow-green-900/40 transition-all border border-green-400/20 disabled:opacity-50"
         >
           {isSubmitting ? (
             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <Save className="w-4 h-4" />
-              Guardar Registro
+              <Save className="w-4 h-4 text-green-300" />
+              {initialData ? "CONFIRMAR" : "CONFIRMAR REGISTRO"}
             </>
           )}
         </button>

@@ -22,7 +22,6 @@ export function VaccinationForm({ onSubmit, onCancel, initialData = null }) {
     if (!formData.vaccine.trim()) newErrors.vaccine = "La vacuna es requerida";
     if (!formData.date) newErrors.date = "La fecha es requerida";
 
-    // Solo validar fechas pasadas si no estamos editando un registro existente
     if (
       !initialData &&
       new Date(formData.date) < new Date(new Date().setHours(0, 0, 0, 0))
@@ -52,115 +51,110 @@ export function VaccinationForm({ onSubmit, onCancel, initialData = null }) {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: null }));
   };
 
+  const inputStyles =
+    "w-full px-5 py-3.5 rounded-2xl border border-gray-100 bg-white focus:ring-4 focus:ring-green-500/5 focus:border-green-500/30 outline-none transition-all font-semibold text-gray-800 placeholder:text-gray-300 shadow-sm text-sm";
+  const labelStyles =
+    "flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-1";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Animal / Lote
-        </label>
+        <label className={labelStyles}>Animal / Lote</label>
         <input
           type="text"
           name="animal"
           value={formData.animal}
           onChange={handleChange}
-          placeholder="ej. BOV-001 o Lote A"
-          className={`w-full px-4 py-2 rounded-xl border ${
-            errors.animal ? "border-red-500 bg-red-50" : "border-gray-200"
-          } focus:ring-2 focus:ring-green-500 outline-none`}
+          placeholder="Ej: BOV-001 o Lote A"
+          className={`${inputStyles} ${errors.animal ? "border-red-200" : ""}`}
         />
         {errors.animal && (
-          <p className="text-red-500 text-xs mt-1">{errors.animal}</p>
+          <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide mt-1 px-1">
+            {errors.animal}
+          </p>
         )}
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Vacuna / Tratamiento
-        </label>
+        <label className={labelStyles}>Vacuna / Tratamiento</label>
         <input
           type="text"
           name="vaccine"
           value={formData.vaccine}
           onChange={handleChange}
-          placeholder="ej. Aftosa"
-          className={`w-full px-4 py-2 rounded-xl border ${
-            errors.vaccine ? "border-red-500 bg-red-50" : "border-gray-200"
-          } focus:ring-2 focus:ring-green-500 outline-none`}
+          placeholder="Ej: Aftosa"
+          className={`${inputStyles} ${errors.vaccine ? "border-red-200" : ""}`}
         />
         {errors.vaccine && (
-          <p className="text-red-500 text-xs mt-1">{errors.vaccine}</p>
+          <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide mt-1 px-1">
+            {errors.vaccine}
+          </p>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Fecha Programada
-          </label>
+          <label className={labelStyles}>Fecha Programada</label>
           <input
             type="date"
             name="date"
             value={formData.date}
             onChange={handleChange}
-            className={`w-full px-4 py-2 rounded-xl border ${
-              errors.date ? "border-red-500 bg-red-50" : "border-gray-200"
-            } focus:ring-2 focus:ring-green-500 outline-none`}
+            className={`${inputStyles} ${errors.date ? "border-red-200" : ""}`}
           />
           {errors.date && (
-            <p className="text-red-500 text-xs mt-1">{errors.date}</p>
+            <p className="text-red-500 text-[10px] font-bold uppercase tracking-wide mt-1 px-1">
+              {errors.date}
+            </p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Prioridad
-          </label>
+          <label className={labelStyles}>Prioridad</label>
           <select
             name="priority"
             value={formData.priority}
             onChange={handleChange}
-            className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none"
+            className={inputStyles}
           >
-            <option value="low">Baja</option>
-            <option value="medium">Media</option>
-            <option value="high">Alta</option>
+            <option value="low">BAJA</option>
+            <option value="medium">MEDIA</option>
+            <option value="high">ALTA</option>
           </select>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Veterinario / Responsable
-        </label>
+        <label className={labelStyles}>Veterinario / Responsable</label>
         <input
           type="text"
           name="veterinarian"
           value={formData.veterinarian}
           onChange={handleChange}
-          placeholder="ej. Dr. Salas o Técnico de turno"
-          className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none"
+          placeholder="Ej: Dr. Salas"
+          className={inputStyles}
         />
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex gap-4 pt-6 border-t border-gray-50">
         <button
           type="button"
           onClick={onCancel}
-          className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors font-medium"
+          className="w-1/3 px-4 py-4 rounded-xl text-gray-400 hover:text-gray-900 font-black text-[10px] uppercase tracking-widest transition-all text-center"
         >
-          Cancelar
+          DESCARTAR
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex-1 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-xl shadow-lg transition-all font-medium flex items-center justify-center gap-2"
+          className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl md:rounded-[1.25rem] bg-[#1a5a35] hover:bg-[#134428] text-white font-black text-[11px] md:text-[13px] uppercase tracking-[0.2em] shadow-xl md:shadow-2xl shadow-green-900/40 transition-all border border-green-400/20 disabled:opacity-50"
         >
           {isSubmitting ? (
-            "Guardando..."
+            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
           ) : (
             <>
-              <Save className="w-4 h-4" />
-              {initialData ? "Actualizar" : "Programar"}
+              <Save className="w-4 h-4 text-green-300" />
+              {initialData ? "CONFIRMAR" : "CONFIRMAR REGISTRO"}
             </>
           )}
         </button>
