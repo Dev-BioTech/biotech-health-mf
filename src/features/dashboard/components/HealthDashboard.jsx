@@ -18,8 +18,20 @@ export default function HealthDashboard({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      <div className="space-y-6">
+        <div className="h-48 bg-gray-100 animate-pulse rounded-3xl" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-40 bg-gray-100 animate-pulse rounded-2xl"
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-64 bg-gray-100 animate-pulse rounded-2xl" />
+          <div className="h-64 bg-gray-100 animate-pulse rounded-2xl" />
+        </div>
       </div>
     );
   }
@@ -90,14 +102,14 @@ export default function HealthDashboard({
           }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-green-900/90 via-emerald-800/85 to-teal-900/90 rounded-3xl" />
-          <div className="relative h-full flex flex-col justify-center px-8">
+          <div className="relative h-full flex flex-col justify-center px-6 sm:px-8">
             <div className="flex items-center gap-3 mb-2">
-              <Activity className="w-8 h-8 text-green-300" />
-              <h1 className="text-3xl font-bold text-white">
+              <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-green-300" />
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
                 Dashboard de Salud
               </h1>
             </div>
-            <p className="text-green-100 text-lg">
+            <p className="text-green-100 text-sm sm:text-lg opacity-90">
               Monitoreo integral y estadísticas de salud de tu ganado.
             </p>
           </div>
@@ -240,32 +252,38 @@ export default function HealthDashboard({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
-        className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
       >
         <button
           onClick={onViewRecords}
           className="p-6 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl shadow-lg hover:shadow-xl transition-all text-white text-left group"
         >
-          <Heart className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform" />
+          <div className="w-12 h-12 bg-white/20 rounded-xl mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Heart className="w-6 h-6 text-white" />
+          </div>
           <h3 className="text-lg font-bold mb-1">Registros Médicos</h3>
-          <p className="text-sm opacity-90">Ver todos los registros de salud</p>
+          <p className="text-sm opacity-90">Ver expedientes de salud</p>
         </button>
 
         <button
           onClick={onViewCalendar}
           className="p-6 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg hover:shadow-xl transition-all text-white text-left group"
         >
-          <Syringe className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform" />
-          <h3 className="text-lg font-bold mb-1">Calendario de Vacunación</h3>
+          <div className="w-12 h-12 bg-white/20 rounded-xl mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Syringe className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="text-lg font-bold mb-1">C. Vacunación</h3>
           <p className="text-sm opacity-90">Programar y ver vacunas</p>
         </button>
 
         <button
           onClick={onViewDiagnostics}
-          className="p-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-xl transition-all text-white text-left group"
+          className="p-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl shadow-lg hover:shadow-xl transition-all text-white text-left group sm:col-span-2 md:col-span-1"
         >
-          <Activity className="w-8 h-8 mb-3 group-hover:scale-110 transition-transform" />
-          <h3 className="text-lg font-bold mb-1">Historial de Diagnósticos</h3>
+          <div className="w-12 h-12 bg-white/20 rounded-xl mb-4 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <Activity className="w-6 h-6 text-white" />
+          </div>
+          <h3 className="text-lg font-bold mb-1">H. Diagnósticos</h3>
           <p className="text-sm opacity-90">Ver y filtrar diagnósticos</p>
         </button>
       </motion.div>

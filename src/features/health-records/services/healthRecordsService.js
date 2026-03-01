@@ -1,4 +1,4 @@
-import apiClient from "../../../shared/utils/apiClient";
+import apiClient from "@shared/utils/apiClient";
 
 export const healthService = {
   // Create a new health event

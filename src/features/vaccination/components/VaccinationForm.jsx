@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { Save, AlertCircle } from "lucide-react";
 
-export function VaccinationForm({ onSubmit, onCancel }) {
+export function VaccinationForm({ onSubmit, onCancel, initialData = null }) {
   const [formData, setFormData] = useState({
-    animal: "", // Should be an animal selector, but using text for now
-    vaccine: "",
-    date: new Date().toISOString().split("T")[0],
-    priority: "medium",
-    status: "pending",
+    animal: initialData?.animal || initialData?.animalName || "",
+    vaccine: initialData?.vaccine || initialData?.treatment || "",
+    date: initialData?.date
+      ? initialData.date.split("T")[0]
+      : new Date().toISOString().split("T")[0],
+    priority: initialData?.priority || "medium",
+    status: initialData?.status || "pending",
+    veterinarian: initialData?.veterinarian || "",
   });
 
   const [errors, setErrors] = useState({});
@@ -19,9 +22,12 @@ export function VaccinationForm({ onSubmit, onCancel }) {
     if (!formData.vaccine.trim()) newErrors.vaccine = "La vacuna es requerida";
     if (!formData.date) newErrors.date = "La fecha es requerida";
 
-    if (new Date(formData.date) < new Date(new Date().setHours(0, 0, 0, 0))) {
-      // Allow past dates only if status is completed?
-      // For now, simple validation
+    // Solo validar fechas pasadas si no estamos editando un registro existente
+    if (
+      !initialData &&
+      new Date(formData.date) < new Date(new Date().setHours(0, 0, 0, 0))
+    ) {
+      newErrors.date = "No puedes programar vacunas en fechas pasadas";
     }
 
     setErrors(newErrors);
@@ -122,6 +128,20 @@ export function VaccinationForm({ onSubmit, onCancel }) {
         </div>
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Veterinario / Responsable
+        </label>
+        <input
+          type="text"
+          name="veterinarian"
+          value={formData.veterinarian}
+          onChange={handleChange}
+          placeholder="ej. Dr. Salas o Técnico de turno"
+          className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:ring-2 focus:ring-green-500 outline-none"
+        />
+      </div>
+
       <div className="flex gap-3 pt-4">
         <button
           type="button"
@@ -140,7 +160,7 @@ export function VaccinationForm({ onSubmit, onCancel }) {
           ) : (
             <>
               <Save className="w-4 h-4" />
-              Programar
+              {initialData ? "Actualizar" : "Programar"}
             </>
           )}
         </button>

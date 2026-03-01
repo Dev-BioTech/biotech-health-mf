@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { healthService } from "@shared/services/healthService";
+import { authUtils } from "@shared/utils/auth";
 
 export const useHealthDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -8,25 +9,11 @@ export const useHealthDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Helper to get selected farm ID
-  const getFarmId = () => {
-    const authStorage = localStorage.getItem("auth-storage");
-    if (authStorage) {
-      try {
-        const parsed = JSON.parse(authStorage);
-        return parsed?.state?.selectedFarm?.id;
-      } catch (e) {
-        console.error("Error parsing auth storage", e);
-      }
-    }
-    return null;
-  };
-
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const farmId = getFarmId();
+        const farmId = authUtils.getSelectedFarmId();
 
         if (!farmId) {
           setError("No se ha seleccionado ninguna granja.");
