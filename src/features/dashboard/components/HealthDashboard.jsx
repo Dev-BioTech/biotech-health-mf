@@ -44,44 +44,43 @@ export default function HealthDashboard({
     );
   }
 
+  // Backend returns: { totalEvents, totalCost, recentSickAnimalsCount, calculatedAt }
   const statsList = [
     {
-      label: "Animales Saludables",
-      value: stats?.healthy?.value || 0,
-      percentage: stats?.healthy?.total
-        ? `${Math.round((stats.healthy.value / stats.healthy.total) * 100)}%`
-        : "",
+      label: "Total de Eventos",
+      value: stats?.totalEvents ?? 0,
+      percentage: "",
       icon: Heart,
       color: "from-green-500 to-green-600",
       bgColor: "from-green-50 to-green-100",
-      trend: stats?.healthy?.trend || "",
+      trend: "",
     },
     {
-      label: "En Tratamiento",
-      value: stats?.treatment?.value || 0,
+      label: "Animales Enfermos Recientes",
+      value: stats?.recentSickAnimalsCount ?? 0,
       percentage: "",
       icon: Activity,
       color: "from-orange-500 to-orange-600",
       bgColor: "from-orange-50 to-orange-100",
-      trend: stats?.treatment?.trend || "",
+      trend: "",
     },
     {
-      label: "Vacunas Pendientes",
-      value: stats?.vaccinesPending?.value || 0,
+      label: "Costo Total",
+      value: `$${(stats?.totalCost ?? 0).toFixed(0)}`,
       percentage: "",
       icon: Syringe,
       color: "from-blue-500 to-blue-600",
       bgColor: "from-blue-50 to-blue-100",
-      trend: stats?.vaccinesPending?.trend || "",
+      trend: "",
     },
     {
       label: "Alertas Críticas",
-      value: stats?.critical?.value || 0,
+      value: stats?.recentSickAnimalsCount ?? 0,
       percentage: "",
       icon: AlertTriangle,
       color: "from-red-500 to-red-600",
       bgColor: "from-red-50 to-red-100",
-      trend: stats?.critical?.trend || "",
+      trend: "",
     },
   ];
 
@@ -172,20 +171,17 @@ export default function HealthDashboard({
           <div className="space-y-4">
             {upcomingEvents.map((event, idx) => (
               <div
-                key={idx}
-                className={`p-4 rounded-xl border-2 ${
-                  event.priority === "high"
-                    ? "bg-red-50 border-red-200"
-                    : "bg-blue-50 border-blue-200"
-                }`}
+                key={event.id || idx}
+                className="p-4 rounded-xl border-2 bg-blue-50 border-blue-200"
               >
                 <div className="flex items-center gap-3 mb-2">
-                  <Calendar className="w-5 h-5 text-green-600" />
-                  <span className="text-sm font-semibold text-green-900">
-                    {event.date}
+                  <Calendar className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm font-semibold text-blue-900">
+                    {event.date || event.eventDate}
                   </span>
                 </div>
-                <p className="text-sm text-green-700">{event.event}</p>
+                <p className="text-sm font-semibold text-blue-800">{event.animalName || event.animal || 'Animal'}</p>
+                <p className="text-sm text-blue-600">{event.type || event.eventType}</p>
               </div>
             ))}
             {upcomingEvents.length === 0 && (
@@ -217,24 +213,18 @@ export default function HealthDashboard({
           <div className="space-y-4">
             {recentTreatments.map((treatment, idx) => (
               <div
-                key={idx}
+                key={treatment.id || idx}
                 className="flex items-start gap-3 pb-4 border-b border-green-100 last:border-0"
               >
-                <div
-                  className={`w-2 h-2 rounded-full mt-2 ${
-                    treatment.status === "success"
-                      ? "bg-green-500"
-                      : "bg-yellow-500"
-                  }`}
-                />
+                <div className="w-2 h-2 rounded-full mt-2 bg-yellow-500" />
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-green-900">
-                    {treatment.animal}
+                    {treatment.animalName || treatment.animal || 'Animal'}
                   </p>
                   <p className="text-sm text-green-600">
-                    {treatment.treatment}
+                    {treatment.treatment || treatment.eventType || treatment.type}
                   </p>
-                  <p className="text-xs text-green-500">{treatment.date}</p>
+                  <p className="text-xs text-green-500">{treatment.date || treatment.eventDate}</p>
                 </div>
               </div>
             ))}

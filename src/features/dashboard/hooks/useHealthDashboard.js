@@ -21,15 +21,17 @@ export const useHealthDashboard = () => {
           return;
         }
 
+        // farmId is injected automatically by apiClient interceptor via X-Farm-Id header.
+        // Do NOT pass farmId as argument to these service methods.
         const [statsData, eventsData, treatmentsData] = await Promise.all([
-          healthService.getDashboardStats(farmId),
-          healthService.getUpcomingEvents(farmId),
-          healthService.getRecentTreatments(farmId),
+          healthService.getDashboardStats(),
+          healthService.getUpcomingEvents(4),
+          healthService.getRecentTreatments(4),
         ]);
 
         setStats(statsData);
-        setUpcomingEvents(eventsData);
-        setRecentTreatments(treatmentsData);
+        setUpcomingEvents(Array.isArray(eventsData) ? eventsData : []);
+        setRecentTreatments(Array.isArray(treatmentsData) ? treatmentsData : []);
         setError(null);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);

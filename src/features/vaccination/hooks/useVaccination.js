@@ -40,29 +40,38 @@ export const useVaccination = () => {
       const farmId = authUtils.getSelectedFarmId();
 
       const payload = {
-        ...vaccinationData,
         farmId: Number(farmId),
-        eventType: "Vacunación",
+        animalId: vaccinationData.animalId ? Number(vaccinationData.animalId) : null,
+        batchId: null, // Using animalId, not batchId
         type: "Vacunación",
+        eventType: "Vacunación",
+        date: vaccinationData.date,
         animalName: vaccinationData.animal,
-        diagnosis: "Vacunación Programada",
+        diagnosis: "Vacunación Aplicada",
         treatment: vaccinationData.vaccine,
         description: `Vacunación: ${vaccinationData.vaccine} para ${vaccinationData.animal}`,
+        veterinarian: vaccinationData.veterinarian,
+        status: vaccinationData.status || "Completado",
+        requiresFollowUp: false,
       };
+
+      if (!payload.animalId) {
+        alertService.error("El ID del animal es requerido", "Error");
+        return false;
+      }
 
       const newRecord = await healthService.createRecord(payload);
 
       alertService.success(
-        `Vacunación programada correctamente para ${vaccinationData.animal}`,
+        `Vacunación registrada correctamente para ${vaccinationData.animal}`,
         "Éxito",
       );
 
-      // Actualizar estado local inmediatamente para evitar saltos
       setVaccinations((prev) => [...prev, { ...newRecord, ...payload }]);
       return true;
     } catch (err) {
-      console.error("Error scheduling vaccination:", err);
-      alertService.error("Error al programar la vacunación", "Error");
+      console.error("Error registering vaccination:", err);
+      alertService.error("Error al registrar la vacunación", "Error");
       return false;
     } finally {
       setLoading(false);
@@ -88,12 +97,12 @@ export const useVaccination = () => {
   };
 
   const upcomingVaccinations = vaccinations
-    .filter((v) => v.status === "pending")
+    .filter((v) => v.status === "pending" || v.status === "Pending")
     .slice(0, 5);
 
   const completedThisMonth = vaccinations.filter(
-    (v) => v.status === "completed",
-  ).length; // Simulado, debería revisar fecha
+    (v) => v.status === "completed" || v.status === "Completed",
+  ).length;
 
   return {
     vaccinations,
