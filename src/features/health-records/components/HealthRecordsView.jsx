@@ -48,16 +48,21 @@ export function HealthRecordsView({
     paginate,
   } = useHealthRecords();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
 
   const handleEditOpen = (record) => {
     setSelectedRecord(record);
-    setIsModalOpen(true);
+    setShowForm(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const handleCreateOpen = () => {
+    setSelectedRecord(null);
+    setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
     setSelectedRecord(null);
   };
 
@@ -77,7 +82,7 @@ export function HealthRecordsView({
           } correctamente`,
           "Éxito",
         );
-        closeModal();
+        handleCloseForm();
       } else {
         alertService.error(
           `No se pudo ${selectedRecord ? "actualizar" : "crear"} el registro. Verifica los datos.`,
@@ -141,6 +146,16 @@ export function HealthRecordsView({
     return <div className="text-red-500 p-4 font-bold">{error}</div>;
   }
 
+  if (showForm) {
+    return (
+      <HealthRecordForm
+        onSubmit={handleSubmit}
+        onCancel={handleCloseForm}
+        initialData={selectedRecord}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header Hero Section */}
@@ -184,7 +199,7 @@ export function HealthRecordsView({
               </div>
 
               <motion.button
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleCreateOpen}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center gap-2 bg-white text-green-900 hover:bg-green-50 px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl shadow-lg transition-all font-bold text-sm sm:text-base"
@@ -396,21 +411,6 @@ export function HealthRecordsView({
           </p>
         </motion.div>
       )}
-
-      {/* Create/Edit Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        title={
-          selectedRecord ? "Editar Registro Médico" : "Nuevo Registro Médico"
-        }
-      >
-        <HealthRecordForm
-          onSubmit={handleSubmit}
-          onCancel={closeModal}
-          initialData={selectedRecord}
-        />
-      </Modal>
     </div>
   );
 }

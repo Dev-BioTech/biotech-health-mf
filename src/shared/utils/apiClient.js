@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// Get API URL from environment or use mock mode
+// Get API URL from environment
 const API_URL =
   import.meta.env.VITE_API_GATEWAY_URL ||
   "https://api.biotech.159.54.176.254.nip.io/api";
@@ -14,18 +14,21 @@ const apiClient = axios.create({
   },
 });
 
-// Interceptor to add JWT token in each request
+// Interceptor: attach JWT token to every request.
+// The backend reads farmId from the JWT claims (GatewayAuthenticationService.GetFarmId()),
+// so we do NOT need to inject farmId as a query param or header — it comes from the token.
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("auth-storage");
-    if (token) {
+    const authStorage = localStorage.getItem("auth-storage");
+    if (authStorage) {
       try {
-        const authData = JSON.parse(token);
-        if (authData?.state?.token) {
-          config.headers.Authorization = `Bearer ${authData.state.token}`;
+        const parsed = JSON.parse(authStorage);
+        const token = parsed?.state?.token;
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
         }
       } catch (error) {
-        console.error("Error parsing auth token:", error);
+        console.error("Error parsing auth storage:", error);
       }
     }
     return config;
@@ -35,13 +38,23 @@ apiClient.interceptors.request.use(
   },
 );
 
-// Interceptor to handle authentication errors
+// Interceptor: handle authentication errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("auth-storage");
-      window.dispatchEvent(new Event("auth-change"));
+      // Only clear session if there is genuinely no token.
+      // Resource-level 401s (farm context issues) must NOT log the user out.
+      try {
+        const parsed = JSON.parse(localStorage.getItem("auth-storage") || "{}");
+        if (!parsed?.state?.token) {
+          localStorage.removeItem("auth-storage");
+          window.dispatchEvent(new Event("auth-change"));
+        }
+      } catch {
+        localStorage.removeItem("auth-storage");
+        window.dispatchEvent(new Event("auth-change"));
+      }
     }
     return Promise.reject(error);
   },

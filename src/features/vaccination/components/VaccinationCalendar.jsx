@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useVaccination } from "../hooks/useVaccination";
-import { Modal } from "@shared/components/Modal";
 import { VaccinationForm } from "./VaccinationForm";
 
 export function VaccinationCalendar({
@@ -33,23 +32,23 @@ export function VaccinationCalendar({
     updateVaccination,
   } = useVaccination();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [selectedVaccination, setSelectedVaccination] = useState(null);
   const [selectedDay, setSelectedDay] = useState(new Date().getDate());
   const [viewMode, setViewMode] = useState("calendar"); // "calendar" or "agenda"
 
   const handleEditOpen = (vaccination) => {
     setSelectedVaccination(vaccination);
-    setIsModalOpen(true);
+    setShowForm(true);
   };
 
   const handleCreateOpen = () => {
     setSelectedVaccination(null);
-    setIsModalOpen(true);
+    setShowForm(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
+  const handleCloseForm = () => {
+    setShowForm(false);
     setSelectedVaccination(null);
   };
 
@@ -74,7 +73,7 @@ export function VaccinationCalendar({
     } else {
       await scheduleVaccination(formData);
     }
-    handleCloseModal();
+    handleCloseForm();
   };
 
   const getDaysInMonth = (month, year) => {
@@ -110,6 +109,16 @@ export function VaccinationCalendar({
 
   if (error) {
     return <div className="text-red-500 font-bold p-4">{error}</div>;
+  }
+
+  if (showForm) {
+    return (
+      <VaccinationForm
+        onSubmit={handleSubmit}
+        onCancel={handleCloseForm}
+        initialData={selectedVaccination}
+      />
+    );
   }
 
   return (
@@ -544,20 +553,6 @@ export function VaccinationCalendar({
         </motion.div>
       </div>
 
-      {/* Schedule Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        title={
-          selectedVaccination ? "Editar Vacunación" : "Programar Vacunación"
-        }
-      >
-        <VaccinationForm
-          onSubmit={handleSubmit}
-          onCancel={handleCloseModal}
-          initialData={selectedVaccination}
-        />
-      </Modal>
     </div>
   );
 }

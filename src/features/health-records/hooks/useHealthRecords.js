@@ -104,14 +104,18 @@ export const useHealthRecords = () => {
 
   return {
     records: currentRecords,
-    allRecords: records, // For count
-    items: currentRecords, // For list view
+    allRecords: records,
+    items: currentRecords,
     loading,
     error,
     searchTerm,
     setSearchTerm,
     filterType,
     setFilterType,
+    filterDateFrom,
+    setFilterDateFrom,
+    filterDateTo,
+    setFilterDateTo,
     createRecord,
     updateRecord,
     currentPage,
