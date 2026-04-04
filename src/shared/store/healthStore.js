@@ -38,7 +38,7 @@ export const useHealthStore = create((set, get) => ({
   createEvent: async (eventData) => {
     set({ loading: true, error: null });
     try {
-      const newEvent = await healthService.createHealthEvent(eventData);
+      const newEvent = await healthService.createRecord(eventData);
       set((state) => ({
         records: [...state.records, newEvent],
         loading: false,
