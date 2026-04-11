@@ -2,26 +2,54 @@ import { useState } from "react";
 import {
   Search,
   Plus,
-  Heart,
   Calendar,
   User,
   FileText,
   Filter,
   ArrowLeft,
   Pencil,
-  Trash2,
   Stethoscope,
-  Activity,
   ClipboardList,
-  CheckCircle2,
-  AlertCircle as AlertIcon,
-  Clock,
+  Pill,
+  Tag,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useHealthRecords } from "../hooks/useHealthRecords";
 import { Modal } from "@shared/components/Modal";
 import { HealthRecordForm } from "./HealthRecordForm";
 import alertService from "@shared/utils/alertService";
+import { getBadgeColorByType } from "@/utils/healthRecordUtils";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
+
+/**
+ * Inline style constants aligned with DESIGN.md
+ * Cards: bg #FFFFFF, border-radius 12px, shadow 0 4px 6px rgba(0,0,0,0.05), padding 20px 24px
+ * Hover: shadow 0 8px 16px rgba(0,0,0,0.08), transition all 200ms ease
+ * Inputs: bg #F5F5F5, border 1px solid #E0E0E0, focus border #2E7D32 + shadow
+ */
+const filterInputStyle = {
+  backgroundColor: "#F5F5F5",
+  border: "1px solid #E0E0E0",
+  borderRadius: "6px",
+  padding: "12px",
+  fontSize: "14px",
+  color: "#212121",
+  outline: "none",
+  transition: "border-color 200ms ease, box-shadow 200ms ease",
+  minHeight: "44px",
+};
+
+const filterInputFocusHandler = (e) => {
+  e.target.style.borderColor = "#2E7D32";
+  e.target.style.boxShadow = "0 0 0 2px rgba(46,125,50,0.2)";
+};
+
+const filterInputBlurHandler = (e) => {
+  e.target.style.borderColor = "#E0E0E0";
+  e.target.style.boxShadow = "none";
+};
 
 export function HealthRecordsView({
   onCreate: onExternalCreate,
@@ -119,21 +147,6 @@ export function HealthRecordsView({
     }
   };
 
-  const renderTypeIcon = (type) => {
-    switch (type) {
-      case "Vacunación":
-        return <Heart className="w-6 h-6 text-white" />;
-      case "Chequeo":
-        return <FileText className="w-6 h-6 text-white" />;
-      case "Tratamiento":
-        return <Heart className="w-6 h-6 text-white" />;
-      case "Desparasitación":
-        return <Heart className="w-6 h-6 text-white" />;
-      default:
-        return <Heart className="w-6 h-6 text-white" />;
-    }
-  };
-
   if (loading && records.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -212,148 +225,602 @@ export function HealthRecordsView({
         </div>
       </motion.div>
 
-      {/* Filters */}
+      {/* ═══ Filters Section — DESIGN.md: Card bg #FFFFFF, border-radius 12px, shadow, padding 20px 24px ═══ */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 border-2 border-green-100"
+        style={{
+          background: "#FFFFFF",
+          borderRadius: "12px",
+          boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
+          padding: "20px 24px",
+        }}
       >
-        <div className="flex flex-col gap-6">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Buscar por animal..."
-              className="w-full pl-12 pr-4 py-3 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
-            />
+        <div className="flex flex-col gap-5">
+          {/* Search input with visible label */}
+          <div>
+            <label
+              htmlFor="health-search-input"
+              style={{
+                display: "block",
+                fontSize: "10px",
+                color: "#9E9E9E",
+                textTransform: "uppercase",
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                marginBottom: "6px",
+              }}
+            >
+              Buscar animal
+            </label>
+            <div style={{ position: "relative" }}>
+              <Search
+                style={{
+                  position: "absolute",
+                  left: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  width: "18px",
+                  height: "18px",
+                  color: "#2E7D32",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                id="health-search-input"
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar por animal..."
+                style={{
+                  ...filterInputStyle,
+                  width: "100%",
+                  paddingLeft: "40px",
+                }}
+                onFocus={filterInputFocusHandler}
+                onBlur={filterInputBlurHandler}
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row gap-4">
-            <div className="flex items-center gap-3">
-              <Filter className="w-5 h-5 text-green-600 flex-shrink-0" />
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="w-full px-4 py-2.5 border-2 border-green-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+          {/* Filters row: mobile stacked, desktop inline */}
+          <div
+            style={{ display: "flex", flexWrap: "wrap", gap: "16px", alignItems: "flex-end" }}
+          >
+            {/* Type filter */}
+            <div style={{ flex: "1 1 200px", minWidth: 0 }}>
+              <label
+                htmlFor="health-filter-type"
+                style={{
+                  display: "block",
+                  fontSize: "10px",
+                  color: "#9E9E9E",
+                  textTransform: "uppercase",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  marginBottom: "6px",
+                }}
               >
-                <option value="all">Todos los tipos</option>
-                <option value="Vacunación">Vacunación</option>
-                <option value="Chequeo">Chequeo</option>
-                <option value="Tratamiento">Tratamiento</option>
-                <option value="Desparasitación">Desparasitación</option>
-              </select>
+                Tipo de registro
+              </label>
+              <div style={{ position: "relative" }}>
+                <Filter
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "16px",
+                    height: "16px",
+                    color: "#2E7D32",
+                    pointerEvents: "none",
+                  }}
+                />
+                <select
+                  id="health-filter-type"
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  style={{
+                    ...filterInputStyle,
+                    width: "100%",
+                    paddingLeft: "38px",
+                    paddingRight: "32px",
+                    appearance: "none",
+                    cursor: "pointer",
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239E9E9E' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 10px center",
+                    backgroundSize: "16px",
+                  }}
+                  onFocus={filterInputFocusHandler}
+                  onBlur={filterInputBlurHandler}
+                >
+                  <option value="all">Todos los tipos</option>
+                  <option value="Vacunación">Vacunación</option>
+                  <option value="Chequeo">Chequeo</option>
+                  <option value="Tratamiento">Tratamiento</option>
+                  <option value="Desparasitación">Desparasitación</option>
+                </select>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-green-600 flex-shrink-0" />
+            {/* Date From */}
+            <div style={{ flex: "1 1 160px", minWidth: 0 }}>
+              <label
+                htmlFor="health-filter-date-from"
+                style={{
+                  display: "block",
+                  fontSize: "10px",
+                  color: "#9E9E9E",
+                  textTransform: "uppercase",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  marginBottom: "6px",
+                }}
+              >
+                Desde
+              </label>
+              <div style={{ position: "relative" }}>
+                <Calendar
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "16px",
+                    height: "16px",
+                    color: "#2E7D32",
+                    pointerEvents: "none",
+                  }}
+                />
                 <input
+                  id="health-filter-date-from"
                   type="date"
                   value={filterDateFrom}
                   onChange={(e) => setFilterDateFrom(e.target.value)}
-                  className="w-full sm:w-auto px-3 py-2 border-2 border-green-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  style={{
+                    ...filterInputStyle,
+                    width: "100%",
+                    paddingLeft: "38px",
+                  }}
+                  onFocus={filterInputFocusHandler}
+                  onBlur={filterInputBlurHandler}
                 />
               </div>
-              <span className="hidden sm:block text-gray-400 font-medium">
-                al
-              </span>
-              <input
-                type="date"
-                value={filterDateTo}
-                onChange={(e) => setFilterDateTo(e.target.value)}
-                className="w-full sm:w-auto px-3 py-2 border-2 border-green-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
+            </div>
+
+            {/* Date To */}
+            <div style={{ flex: "1 1 160px", minWidth: 0 }}>
+              <label
+                htmlFor="health-filter-date-to"
+                style={{
+                  display: "block",
+                  fontSize: "10px",
+                  color: "#9E9E9E",
+                  textTransform: "uppercase",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  marginBottom: "6px",
+                }}
+              >
+                Hasta
+              </label>
+              <div style={{ position: "relative" }}>
+                <Calendar
+                  style={{
+                    position: "absolute",
+                    left: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "16px",
+                    height: "16px",
+                    color: "#2E7D32",
+                    pointerEvents: "none",
+                  }}
+                />
+                <input
+                  id="health-filter-date-to"
+                  type="date"
+                  value={filterDateTo}
+                  onChange={(e) => setFilterDateTo(e.target.value)}
+                  style={{
+                    ...filterInputStyle,
+                    width: "100%",
+                    paddingLeft: "38px",
+                  }}
+                  onFocus={filterInputFocusHandler}
+                  onBlur={filterInputBlurHandler}
+                />
+              </div>
             </div>
           </div>
         </div>
       </motion.div>
 
-      {/* Records List */}
-      <div className="grid grid-cols-1 gap-4">
-        {records.map((record, index) => (
-          <motion.div
-            key={record.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ scale: 1.01 }}
-            className="bg-white rounded-2xl shadow-lg p-6 border-2 border-green-100 hover:shadow-xl transition-all group/card"
-          >
-            <div className="flex items-start gap-4">
-              {/* Icon */}
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                {renderTypeIcon(record.type)}
-              </div>
+      {/* ═══ Records List ═══ */}
+      <div className="grid grid-cols-1 gap-5">
+        {records.map((record, index) => {
+          const badgeColor = getBadgeColorByType(record.type);
+          const isDisabledEdit =
+            record.status === "Completado" ||
+            record.status === "completed" ||
+            record.status === "Cancelado" ||
+            record.status === "canceled";
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
-                  <div className="min-w-0">
-                    <h3 className="text-lg font-bold text-green-900 truncate pr-14">
-                      {record.animalName || record.animal}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="px-2.5 py-1 bg-green-50 text-green-700 rounded-lg text-xs font-bold border border-green-100 uppercase tracking-wider">
-                        {record.type}
-                      </span>
-                      <span className="text-xs text-green-500 font-medium flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {record.date}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span
-                      className={`px-4 py-2 rounded-full text-sm font-semibold border-2 ${getStatusColor(
-                        record.statusStyle || record.status,
-                      )}`}
-                    >
-                      {record.status}
-                    </span>
+          return (
+            <motion.div
+              key={record.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.08 }}
+            >
+              <div
+                style={{
+                  background: "#FFFFFF",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 6px rgba(0,0,0,0.05)",
+                  padding: "20px 24px",
+                  transition: "all 200ms ease",
+                  cursor: "default",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 16px rgba(0,0,0,0.08)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 6px rgba(0,0,0,0.05)";
+                }}
+              >
+                {/* ── Fila 1: Badge tipo + fecha ── */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <span
+                    style={{
+                      backgroundColor: badgeColor.bg,
+                      color: badgeColor.text,
+                      borderRadius: "6px",
+                      padding: "4px 10px",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                    }}
+                  >
+                    {record.type}
+                  </span>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "12px",
+                      color: "#9E9E9E",
+                      fontWeight: 500,
+                    }}
+                  >
+                    <Calendar
+                      style={{ width: "14px", height: "14px", color: "#9E9E9E" }}
+                    />
+                    {record.date}
                   </div>
                 </div>
 
-                <p className="text-sm text-green-700 line-clamp-2 mb-4 italic opacity-85">
-                  "{record.description || "Sin descripción detallada"}"
-                </p>
-
-                <div className="flex items-end justify-between gap-4 bg-green-50/30 p-3 rounded-xl border border-green-100/50">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 flex-1">
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <User className="w-3.5 h-3.5 text-green-600" />
-                      <span className="font-semibold text-green-800">
-                        {record.veterinarian || "Dr. No asignado"}
-                      </span>
+                {/* ── Fila 2: Animal name + status badge + edit btn ── */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0 }}>
+                    {/* ClipboardList icon per DESIGN.md */}
+                    <div
+                      style={{
+                        background: "#E8F5E9",
+                        borderRadius: "8px",
+                        padding: "8px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ClipboardList
+                        style={{ width: "22px", height: "22px", color: "#2E7D32" }}
+                      />
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                      <Calendar className="w-3.5 h-3.5 text-green-600" />
-                      <span>{record.date}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                      <Tag
+                        style={{ width: "16px", height: "16px", color: "#212121", flexShrink: 0 }}
+                      />
+                      <h3
+                        style={{
+                          fontWeight: 700,
+                          fontSize: "16px",
+                          color: "#212121",
+                          margin: 0,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {record.animalName || record.animal || record.animalId || "Sin nombre"}
+                      </h3>
                     </div>
                   </div>
 
-                  {/* Edit button at the bottom right */}
-                  {record.status !== "Completado" &&
-                    record.status !== "completed" &&
-                    record.status !== "Cancelado" &&
-                    record.status !== "canceled" && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+                    <span
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-[10px] font-bold uppercase border tracking-wider",
+                        getStatusColor(record.statusStyle || record.status),
+                      )}
+                    >
+                      {record.status}
+                    </span>
+                    {!isDisabledEdit && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEditOpen(record);
                         }}
-                        className="p-2.5 bg-white text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-md border border-blue-100 group/btn hover:scale-105 active:scale-95"
                         title="Editar registro"
+                        style={{
+                          width: "44px",
+                          height: "44px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          borderRadius: "8px",
+                          border: "1px solid #E0E0E0",
+                          background: "#FFFFFF",
+                          color: "#2E7D32",
+                          cursor: "pointer",
+                          transition: "all 200ms ease",
+                          flexShrink: 0,
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#E8F5E9";
+                          e.currentTarget.style.borderColor = "#2E7D32";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "#FFFFFF";
+                          e.currentTarget.style.borderColor = "#E0E0E0";
+                        }}
                       >
-                        <Pencil className="w-4 h-4" />
+                        <Pencil style={{ width: "16px", height: "16px" }} />
                       </button>
                     )}
+                  </div>
+                </div>
+
+                {/* ── Fila 3: Descripción en cursiva ── */}
+                {(record.description || record.diagnosis) && (
+                  <p
+                    style={{
+                      fontStyle: "italic",
+                      color: "#9E9E9E",
+                      fontSize: "14px",
+                      margin: "0 0 16px 0",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      lineHeight: "1.5",
+                    }}
+                  >
+                    "{record.description || record.diagnosis}"
+                  </p>
+                )}
+
+                {/* ── Separador ── */}
+                <div
+                  style={{
+                    borderTop: "1px solid #F5F5F5",
+                    paddingTop: "16px",
+                  }}
+                >
+                  {/* ── Fila 4: Info grid con labels explícitas ── */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Veterinario */}
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                      <div
+                        style={{
+                          background: "#F5F5F5",
+                          borderRadius: "6px",
+                          padding: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <User style={{ width: "14px", height: "14px", color: "#2E7D32" }} />
+                      </div>
+                      <div>
+                        <span
+                          style={{
+                            fontSize: "9px",
+                            color: "#9E9E9E",
+                            textTransform: "uppercase",
+                            fontWeight: 700,
+                            letterSpacing: "0.12em",
+                            display: "block",
+                            marginBottom: "2px",
+                          }}
+                        >
+                          Veterinario
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "14px",
+                            color: "#212121",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {record.veterinarian || "Dr. No asignado"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Fecha evento */}
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                      <div
+                        style={{
+                          background: "#F5F5F5",
+                          borderRadius: "6px",
+                          padding: "6px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: "2px",
+                        }}
+                      >
+                        <Calendar style={{ width: "14px", height: "14px", color: "#2E7D32" }} />
+                      </div>
+                      <div>
+                        <span
+                          style={{
+                            fontSize: "9px",
+                            color: "#9E9E9E",
+                            textTransform: "uppercase",
+                            fontWeight: 700,
+                            letterSpacing: "0.12em",
+                            display: "block",
+                            marginBottom: "2px",
+                          }}
+                        >
+                          Fecha evento
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "14px",
+                            color: "#212121",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {record.date}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Diagnóstico — solo si existe */}
+                    {(record.diagnosis || record.description) && (
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                        <div
+                          style={{
+                            background: "#F5F5F5",
+                            borderRadius: "6px",
+                            padding: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            marginTop: "2px",
+                          }}
+                        >
+                          <Stethoscope style={{ width: "14px", height: "14px", color: "#2E7D32" }} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <span
+                            style={{
+                              fontSize: "9px",
+                              color: "#9E9E9E",
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              letterSpacing: "0.12em",
+                              display: "block",
+                              marginBottom: "2px",
+                            }}
+                          >
+                            Diagnóstico
+                          </span>
+                          <p
+                            style={{
+                              fontSize: "14px",
+                              color: "#212121",
+                              fontWeight: 600,
+                              margin: 0,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                              lineHeight: "1.4",
+                            }}
+                          >
+                            {record.diagnosis || record.description}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tratamiento — solo si existe */}
+                    {record.treatment && (
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                        <div
+                          style={{
+                            background: "#F5F5F5",
+                            borderRadius: "6px",
+                            padding: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            marginTop: "2px",
+                          }}
+                        >
+                          <Pill style={{ width: "14px", height: "14px", color: "#2E7D32" }} />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <span
+                            style={{
+                              fontSize: "9px",
+                              color: "#9E9E9E",
+                              textTransform: "uppercase",
+                              fontWeight: 700,
+                              letterSpacing: "0.12em",
+                              display: "block",
+                              marginBottom: "2px",
+                            }}
+                          >
+                            Tratamiento
+                          </span>
+                          <p
+                            style={{
+                              fontSize: "14px",
+                              color: "#212121",
+                              fontWeight: 600,
+                              margin: 0,
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                              lineHeight: "1.4",
+                            }}
+                          >
+                            {record.treatment}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Pagination Controls */}

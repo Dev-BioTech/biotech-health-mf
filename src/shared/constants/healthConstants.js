@@ -20,3 +20,18 @@ export const TREATMENT_TYPES = {
   VITAMIN: 'Vitamina',
   OTHER: 'Otro'
 }
+
+export const HEALTH_RECORD_TYPES = [
+  { value: "Chequeo", label: "CHEQUEO GENERAL" },
+  { value: "Vacunación", label: "VACUNACIÓN" },
+  { value: "Tratamiento", label: "TRATAMIENTO ESPECÍFICO" },
+  { value: "Desparasitación", label: "DESPARASITACIÓN" },
+  { value: "Emergencia", label: "EMERGENCIA / URGENCIAS" },
+];
+
+export const PROCEDURE_STATUSES = [
+  { value: "Pendiente", label: "PENDIENTE" },
+  { value: "En Curso", label: "EN CURSO" },
+  { value: "Completado", label: "COMPLETADO" },
+  { value: "Cancelado", label: "CANCELADO" },
+];

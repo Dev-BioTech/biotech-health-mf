@@ -18,21 +18,48 @@ export const useHealthRecords = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [recordsPerPage] = useState(5);
 
+  const applyFilters = (rawData) => {
+    return rawData.filter((record) => {
+      // Search (animalName, veterinarian, diagnosis)
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const matchAnimal = (record.animalName || record.animal || "").toLowerCase().includes(searchLower);
+        const matchVet = (record.veterinarian || "").toLowerCase().includes(searchLower);
+        const matchDiag = (record.diagnosis || record.disease || "").toLowerCase().includes(searchLower);
+        if (!matchAnimal && !matchVet && !matchDiag) return false;
+      }
+
+      // Date From
+      if (filterDateFrom && record.date) {
+        if (new Date(record.date) < new Date(filterDateFrom)) return false;
+      }
+
+      // Date To
+      if (filterDateTo && record.date) {
+        // Include exactly the "To" date by checking boundary
+        const recordDateStr = new Date(record.date).toISOString().split("T")[0];
+        if (recordDateStr > filterDateTo) return false;
+      }
+
+      return true;
+    });
+  };
+
   // Load records when filters change
   useEffect(() => {
     const fetchRecords = async () => {
       try {
         setLoading(true);
         const farmId = authUtils.getSelectedFarmId();
-        const data = await healthService.getHealthRecords({
-          search: searchTerm,
+        const rawData = await healthService.getHealthRecords({
           type: filterType,
-          fromDate: filterDateFrom,
-          toDate: filterDateTo,
           farmId,
         });
-        setRecords(data);
-        setItems(data); // Sync items
+
+        const filteredData = applyFilters(rawData);
+
+        setRecords(filteredData);
+        setItems(filteredData); // Sync items
         setCurrentPage(1); // Reset to first page on new filter/search
         setError(null);
       } catch (err) {
@@ -62,14 +89,25 @@ export const useHealthRecords = () => {
   const createRecord = async (newRecord) => {
     try {
       setLoading(true);
-      await healthService.createRecord(newRecord);
-      // Reload to get the updated list
-      const data = await healthService.getHealthRecords({
-        search: searchTerm,
-        type: filterType,
-      });
-      setRecords(data);
-      setItems(data);
+      const createdRecord = await healthService.createRecord(newRecord);
+      
+      // Optimistic update using whatever backend returns or what we sent
+      const newEntry = createdRecord || { ...newRecord, id: Date.now() };
+      setRecords((prev) => [newEntry, ...prev]);
+      setItems((prev) => [newEntry, ...prev]);
+      
+      // Defer full re-fetch to allow CQRS/Read-Model to catch up
+      setTimeout(async () => {
+        const farmId = authUtils.getSelectedFarmId();
+        const rawData = await healthService.getHealthRecords({
+          type: filterType,
+          farmId,
+        });
+        const filteredData = applyFilters(rawData);
+        setRecords(filteredData);
+        setItems(filteredData);
+      }, 500);
+      
       return true;
     } catch (err) {
       setError("Error al crear registro");
@@ -82,17 +120,28 @@ export const useHealthRecords = () => {
   const updateRecord = async (id, updatedRecord) => {
     try {
       setLoading(true);
-      await healthService.updateRecord(id, updatedRecord);
-      // Reload to get the updated list
-      const data = await healthService.getHealthRecords({
-        search: searchTerm,
-        type: filterType,
-        fromDate: filterDateFrom,
-        toDate: filterDateTo,
-        farmId: authUtils.getSelectedFarmId(),
-      });
-      setRecords(data);
-      setItems(data);
+      const returnedRecord = await healthService.updateRecord(id, updatedRecord);
+      
+      // Optimistic update of local state immediately
+      setRecords((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, ...updatedRecord, ...returnedRecord } : r))
+      );
+      setItems((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, ...updatedRecord, ...returnedRecord } : r))
+      );
+
+      // Defer full re-fetch to allow fast backend buses/caches to sync
+      setTimeout(async () => {
+        const farmId = authUtils.getSelectedFarmId();
+        const rawData = await healthService.getHealthRecords({
+          type: filterType,
+          farmId,
+        });
+        const filteredData = applyFilters(rawData);
+        setRecords(filteredData);
+        setItems(filteredData);
+      }, 500);
+
       return true;
     } catch (err) {
       setError("Error al actualizar registro");

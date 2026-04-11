@@ -1,4 +1,5 @@
 import apiClient from "../utils/apiClient";
+import { animalService } from "./animalService";
 
 // Maps Spanish UI types -> English backend EventType enum values
 // Validated against the real backend (PascalCase enums)
@@ -50,12 +51,18 @@ const buildPayload = (eventData) => ({
   notes:            eventData.notes || eventData.description,
   animalName:       eventData.animalName || eventData.animal,
   requiresFollowUp: eventData.requiresFollowUp ?? false,
+  
+  // Explicitly map treatment to all possible backend names just in case it expects one of them
+  // (unmapped fields sent via spread might be ignored due to serialization settings)
+  treatment:      eventData.treatment || eventData.medication || eventData.treatmentNotes,
+  medication:     eventData.treatment || eventData.medication || eventData.treatmentNotes,
+  treatmentNotes: eventData.treatment || eventData.medication || eventData.treatmentNotes,
 });
 
 /**
  * Normalizes the backend HealthEventResponse to frontend-friendly field names.
- * Backend returns: eventType, eventDate, veterinarianName, disease, notes, cost
- * Frontend expects: type, date, veterinarian, diagnosis, description
+ * Backend returns: eventType, eventDate, veterinarianName, disease, notes, cost, treatment
+ * Frontend expects: type, date, veterinarian, diagnosis, description, treatment
  * NOTE: "estimatedCost" in the request is stored as "cost" in the response.
  *       "description" in the request is stored as "notes" in the response.
  */
@@ -69,23 +76,56 @@ const normalizeRecord = (record) => {
     veterinarian: record.veterinarian || record.veterinarianName,
     diagnosis:    record.diagnosis || record.disease,
     description:  record.description || record.notes,
+    treatment:    record.treatment || record.medication || record.treatmentNotes || "",
     animal:       record.animal || record.animalName,
+    animalName:   record.animalName || record.animal,
     cost:         record.cost ?? record.estimatedCost,
   };
 };
 
 /**
- * Normalizes API list responses.
+ * Normalizes API list responses and enriches records with animal names.
  * Confirmed backend response shapes for health endpoints:
  *   - Array directly (GET /farm, /animal, /type, /upcoming, /recent-treatments)
  *   - { data: [] }   (wrapped array)
  *   - { data: {} }   (single object — POST, PUT, dashboard-stats — handled elsewhere)
  */
-const normalizeList = (data) => {
-  if (Array.isArray(data)) return data.map(normalizeRecord);
-  if (Array.isArray(data?.data)) return data.data.map(normalizeRecord);
-  if (Array.isArray(data?.healthEvents)) return data.healthEvents.map(normalizeRecord);
-  return [];
+
+// In-memory cache so we don't re-fetch the same animal within a session
+const _animalNameCache = {};
+
+const normalizeList = async (data) => {
+  let records = [];
+  if (Array.isArray(data)) records = data.map(normalizeRecord);
+  else if (Array.isArray(data?.data)) records = data.data.map(normalizeRecord);
+  else if (Array.isArray(data?.healthEvents)) records = data.healthEvents.map(normalizeRecord);
+
+  // Collect ALL unique animalIds (always resolve from API, not from stale form data)
+  const uniqueIds = [
+    ...new Set(records.filter((r) => r.animalId).map((r) => r.animalId)),
+  ];
+
+  // Fetch any IDs not yet in cache
+  const idsToFetch = uniqueIds.filter((id) => !_animalNameCache[id]);
+  if (idsToFetch.length > 0) {
+    await Promise.all(
+      idsToFetch.map(async (id) => {
+        try {
+          const animal = await animalService.getAnimalById(id);
+          _animalNameCache[id] =
+            animal?.name || animal?.nombre || animal?.identifier || `Animal #${id}`;
+        } catch {
+          _animalNameCache[id] = `Animal #${id}`;
+        }
+      })
+    );
+  }
+
+  // Apply resolved animal names — always prefer the API-resolved name over form data
+  return records.map((r) => ({
+    ...r,
+    animalName: _animalNameCache[r.animalId] || r.animalName || r.animal || null,
+  }));
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
