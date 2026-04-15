@@ -32,31 +32,22 @@ const statusMapping = {
  * NOTE: backend uses "eventType" (not "type") and "eventDate" (YYYY-MM-DD, no UTC Z).
  */
 const buildPayload = (eventData) => ({
-  ...eventData,
-  // Type mapping (Spanish -> English enum). Field name is "eventType" in the backend.
+  animalId: eventData.animalId ? Number(eventData.animalId) : null,
   eventType:
     typeMapping[eventData.type] ||
     typeMapping[eventData.eventType] ||
-    eventData.eventType ||
-    eventData.type,
-  // Status mapping
+    eventData.type ||
+    eventData.eventType,
   status: statusMapping[eventData.status] || eventData.status,
-  // Field name mapping (frontend -> backend DTO)
   eventDate:
-    eventData.eventDate ||
     eventData.date ||
+    eventData.eventDate ||
     new Date().toISOString().split("T")[0],
-  veterinarianName: eventData.veterinarianName || eventData.veterinarian,
-  disease:          eventData.disease || eventData.diagnosis,
-  notes:            eventData.notes || eventData.description,
-  animalName:       eventData.animalName || eventData.animal,
+  veterinarianName: eventData.veterinarian || eventData.veterinarianName,
+  disease: eventData.diagnosis || eventData.disease,
+  medication: eventData.treatment || eventData.medication || eventData.treatmentNotes,
+  notes: eventData.description || eventData.notes,
   requiresFollowUp: eventData.requiresFollowUp ?? false,
-  
-  // Explicitly map treatment to all possible backend names just in case it expects one of them
-  // (unmapped fields sent via spread might be ignored due to serialization settings)
-  treatment:      eventData.treatment || eventData.medication || eventData.treatmentNotes,
-  medication:     eventData.treatment || eventData.medication || eventData.treatmentNotes,
-  treatmentNotes: eventData.treatment || eventData.medication || eventData.treatmentNotes,
 });
 
 /**

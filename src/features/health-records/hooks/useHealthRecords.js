@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { healthService } from "@shared/services/healthService";
 import { authUtils } from "@shared/utils/auth";
 
-export const useHealthRecords = () => {
+export const useHealthRecords = (initialType = "all") => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -10,7 +10,7 @@ export const useHealthRecords = () => {
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("all");
+  const [filterType, setFilterType] = useState(initialType);
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
 
@@ -124,10 +124,10 @@ export const useHealthRecords = () => {
       
       // Optimistic update of local state immediately
       setRecords((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, ...updatedRecord, ...returnedRecord } : r))
+        prev.map((r) => (r.id === id ? { ...r, ...updatedRecord } : r))
       );
       setItems((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, ...updatedRecord, ...returnedRecord } : r))
+        prev.map((r) => (r.id === id ? { ...r, ...updatedRecord } : r))
       );
 
       // Defer full re-fetch to allow fast backend buses/caches to sync

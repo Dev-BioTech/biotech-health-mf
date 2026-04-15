@@ -27,7 +27,7 @@ const DiagnosticHistory = ({ onBack }) => {
     currentPage,
     totalPages,
     paginate,
-  } = useHealthRecords();
+  } = useHealthRecords("Diagnóstico");
 
   const getSeverityColor = (status) => {
     // We simulate severity based on status or type
